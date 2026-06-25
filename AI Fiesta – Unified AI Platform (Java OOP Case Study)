@@ -1,0 +1,283 @@
+import java.util.*;
+
+// Custom Exception
+class InsufficientTokensException extends Exception {
+    public InsufficientTokensException(String msg) {
+        super(msg);
+    }
+}
+
+// User Class (Encapsulation + Constructor Overloading)
+class User {
+
+    private String userName;
+    private String emailId;
+    private String subscriptionPlan;
+    private int availableTokens;
+
+    // Constructor 1
+    public User(String userName) {
+        this.userName = userName;
+        this.emailId = "Not Provided";
+        this.subscriptionPlan = "Free";
+        allocateTokens();
+    }
+
+    // Constructor 2
+    public User(String userName, String emailId) {
+        this.userName = userName;
+        this.emailId = emailId;
+        this.subscriptionPlan = "Free";
+        allocateTokens();
+    }
+
+    // Constructor 3
+    public User(String userName, String emailId,
+                String subscriptionPlan) {
+        this.userName = userName;
+        this.emailId = emailId;
+        this.subscriptionPlan = subscriptionPlan;
+        allocateTokens();
+    }
+
+    private void allocateTokens() {
+        switch(subscriptionPlan) {
+            case "Pro":
+                availableTokens = 1000;
+                break;
+
+            case "Enterprise":
+                availableTokens = 5000;
+                break;
+
+            default:
+                availableTokens = 100;
+        }
+    }
+
+    public String getUserName() {
+        return userName;
+    }
+
+    public int getAvailableTokens() {
+        return availableTokens;
+    }
+
+    public void setAvailableTokens(int tokens) {
+        availableTokens = tokens;
+    }
+}
+
+// Interface
+interface AIService {
+    void generateResponse(String prompt);
+}
+
+// Abstract Class
+abstract class AIModel implements AIService {
+
+    protected String modelName;
+    protected String provider;
+
+    public AIModel(String modelName,
+                   String provider) {
+
+        this.modelName = modelName;
+        this.provider = provider;
+    }
+
+    public void displayModelDetails() {
+
+        System.out.println("Model : "
+                           + modelName);
+
+        System.out.println("Provider : "
+                           + provider);
+    }
+
+    public abstract int getTokenCost();
+}
+
+// ChatGPT
+class ChatGPT extends AIModel {
+
+    public ChatGPT() {
+        super("ChatGPT","OpenAI");
+    }
+
+    public void generateResponse(String prompt) {
+        System.out.println(
+        "ChatGPT processed : " + prompt);
+    }
+
+    public int getTokenCost() {
+        return 20;
+    }
+}
+
+// Gemini
+class Gemini extends AIModel {
+
+    public Gemini() {
+        super("Gemini","Google");
+    }
+
+    public void generateResponse(String prompt) {
+        System.out.println(
+        "Gemini processed : " + prompt);
+    }
+
+    public int getTokenCost() {
+        return 15;
+    }
+}
+
+// Claude
+class Claude extends AIModel {
+
+    public Claude() {
+        super("Claude","Anthropic");
+    }
+
+    public void generateResponse(String prompt) {
+        System.out.println(
+        "Claude processed : " + prompt);
+    }
+
+    public int getTokenCost() {
+        return 25;
+    }
+}
+
+// AIFiesta
+class AIFiesta {
+
+    HashMap<String,User> registeredUsers
+            = new HashMap<>();
+
+    ArrayList<String> promptHistory
+            = new ArrayList<>();
+
+    public void registerUser(User user) {
+
+        registeredUsers.put(
+        user.getUserName(),
+        user);
+    }
+
+    public void processPrompt(
+            String userName,
+            AIModel model,
+            String prompt)
+
+            throws InsufficientTokensException {
+
+        User user =
+        registeredUsers.get(userName);
+
+        int cost =
+        model.getTokenCost();
+
+        if(user.getAvailableTokens()
+                < cost) {
+
+            throw new
+            InsufficientTokensException(
+            "Insufficient Tokens");
+        }
+
+        model.generateResponse(prompt);
+
+        user.setAvailableTokens(
+        user.getAvailableTokens()
+        - cost);
+
+        promptHistory.add(prompt);
+
+        System.out.println(
+        "Remaining Tokens : "
+        + user.getAvailableTokens());
+    }
+
+    public void displayPromptHistory() {
+
+        System.out.println(
+        "\nPrompt History");
+
+        for(String p : promptHistory) {
+
+            System.out.println(p);
+        }
+    }
+}
+
+// Main Class
+public class Main {
+
+    public static void main(String[] args) {
+
+        AIFiesta fiesta =
+                new AIFiesta();
+
+        User u1 =
+        new User("Nikitha");
+
+        User u2 =
+        new User(
+        "Rahul",
+        "rahul@gmail.com");
+
+        User u3 =
+        new User(
+        "Admin",
+        "admin@gmail.com",
+        "Enterprise");
+
+        fiesta.registerUser(u1);
+        fiesta.registerUser(u2);
+        fiesta.registerUser(u3);
+
+        AIModel chatgpt =
+                new ChatGPT();
+
+        AIModel gemini =
+                new Gemini();
+
+        AIModel claude =
+                new Claude();
+
+        try {
+
+            chatgpt.displayModelDetails();
+
+            fiesta.processPrompt(
+            "Nikitha",
+            chatgpt,
+            "Explain OOP");
+
+            gemini.displayModelDetails();
+
+            fiesta.processPrompt(
+            "Rahul",
+            gemini,
+            "What is Java?");
+
+            claude.displayModelDetails();
+
+            fiesta.processPrompt(
+            "Admin",
+            claude,
+            "Generate Report");
+
+        }
+
+        catch(
+        InsufficientTokensException e) {
+
+            System.out.println(
+            e.getMessage());
+        }
+
+        fiesta.displayPromptHistory();
+    }
+}
