@@ -1,0 +1,214 @@
+import java.util.Scanner;
+
+class Employee {
+
+    private int id;
+    private String name;
+    private String department;
+    private double basicSalary;
+
+    Employee(int id, String name, String department, double basicSalary) {
+        this.id = id;
+        this.name = name;
+        this.department = department;
+        this.basicSalary = basicSalary;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getDepartment() {
+        return department;
+    }
+
+    public double getBasicSalary() {
+        return basicSalary;
+    }
+
+    public double calculateBonus() {
+
+        return basicSalary * 0.10;
+
+    }
+
+    public double calculateTax() {
+
+        return basicSalary * 0.05;
+
+    }
+
+    public double calculateNetSalary() {
+
+        return basicSalary + calculateBonus() - calculateTax();
+
+    }
+
+    public void displayEmployee() {
+
+        System.out.println("\n-----------------------------");
+        System.out.println("Employee ID : " + id);
+        System.out.println("Name        : " + name);
+        System.out.println("Department  : " + department);
+        System.out.println("Basic Salary: ₹" + basicSalary);
+        System.out.println("Bonus       : ₹" + calculateBonus());
+        System.out.println("Tax         : ₹" + calculateTax());
+        System.out.println("Net Salary  : ₹" + calculateNetSalary());
+        System.out.println("-----------------------------");
+
+    }
+
+}
+
+public class EmployeePayrollManagement {
+
+    static Scanner sc = new Scanner(System.in);
+
+    static Employee[] employees = new Employee[20];
+
+    static int count = 0;
+
+    public static void addEmployee() {
+
+        System.out.print("Enter Employee ID : ");
+        int id = sc.nextInt();
+        sc.nextLine();
+
+        System.out.print("Enter Name : ");
+        String name = sc.nextLine();
+
+        System.out.print("Enter Department : ");
+        String dept = sc.nextLine();
+
+        System.out.print("Enter Basic Salary : ");
+        double salary = sc.nextDouble();
+
+        employees[count] = new Employee(id, name, dept, salary);
+
+        count++;
+
+        System.out.println("\nEmployee Added Successfully!");
+
+    }
+    public static void displayEmployees() {
+
+        if(count==0){
+
+            System.out.println("\nNo Employees Found!");
+
+            return;
+
+        }
+
+        System.out.println("\n===== EMPLOYEE LIST =====");
+
+        for(int i=0;i<count;i++){
+
+            employees[i].displayEmployee();
+
+        }
+
+    }
+
+    public static void searchEmployee(){
+
+        if(count==0){
+
+            System.out.println("\nNo Employees Available!");
+
+            return;
+
+        }
+
+        System.out.print("Enter Employee ID to Search : ");
+
+        int id=sc.nextInt();
+
+        boolean found=false;
+
+        for(int i=0;i<count;i++){
+
+            if(employees[i].getId()==id){
+
+                employees[i].displayEmployee();
+
+                found=true;
+
+                break;
+
+            }
+
+        }
+
+        if(!found){
+
+            System.out.println("\nEmployee Not Found!");
+
+        }
+
+    }
+
+    public static void menu(){
+
+        System.out.println("\n==============================");
+        System.out.println(" EMPLOYEE PAYROLL MANAGEMENT ");
+        System.out.println("==============================");
+        System.out.println("1. Add Employee");
+        System.out.println("2. Display Employees");
+        System.out.println("3. Search Employee");
+        System.out.println("4. Exit");
+        System.out.print("Enter Choice : ");
+
+    }
+
+    public static void main(String[] args){
+
+        int choice;
+
+        do{
+
+            menu();
+
+            choice=sc.nextInt();
+
+            switch(choice){
+
+                case 1:
+
+                    addEmployee();
+
+                    break;
+
+                case 2:
+
+                    displayEmployees();
+
+                    break;
+
+                case 3:
+
+                    searchEmployee();
+
+                    break;
+
+                case 4:
+
+                    System.out.println("\nThank You!");
+
+                    break;
+
+                default:
+
+                    System.out.println("\nInvalid Choice!");
+
+            }
+
+        }while(choice!=4);
+
+    }
+
+}
