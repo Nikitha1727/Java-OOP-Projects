@@ -1,0 +1,59 @@
+import java.util.Scanner;
+
+public class CoffeeShopBilling {
+
+    public static void main(String[] args) {
+
+        Scanner sc = new Scanner(System.in);
+
+        String customerName;
+        int coffeeQty;
+        int sandwichQty;
+        int cakeQty;
+
+        final int COFFEE = 120;
+        final int SANDWICH = 150;
+        final int CAKE = 180;
+
+        System.out.println("====== Coffee Shop Billing ======");
+
+        System.out.print("Enter Customer Name: ");
+        customerName = sc.nextLine();
+
+        System.out.print("Coffee Quantity: ");
+        coffeeQty = sc.nextInt();
+
+        System.out.print("Sandwich Quantity: ");
+        sandwichQty = sc.nextInt();
+
+        System.out.print("Cake Quantity: ");
+        cakeQty = sc.nextInt();
+
+        int coffeeBill = coffeeQty * COFFEE;
+        int sandwichBill = sandwichQty * SANDWICH;
+        int cakeBill = cakeQty * CAKE;
+
+        int total = coffeeBill + sandwichBill + cakeBill;
+
+        double gst = total * 0.05;
+
+        double finalAmount = total + gst;
+
+        System.out.println("\n========== BILL ==========");
+        System.out.println("Customer : " + customerName);
+        System.out.println("Coffee   : ₹" + coffeeBill);
+        System.out.println("Sandwich : ₹" + sandwichBill);
+        System.out.println("Cake     : ₹" + cakeBill);
+        System.out.println("--------------------------");
+        System.out.println("Subtotal : ₹" + total);
+        System.out.println("GST (5%) : ₹" + gst);
+        System.out.println("Total    : ₹" + finalAmount);
+        System.out.println("==========================");
+
+        if(finalAmount > 1000){
+            System.out.println("🎉 Congratulations! You received a Free Coffee Coupon.");
+        }
+
+        sc.close();
+    }
+}
