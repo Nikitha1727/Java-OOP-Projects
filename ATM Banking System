@@ -1,0 +1,136 @@
+import java.util.*;
+
+public class ATMBankingSystem {
+    static class Account {
+        private String name;
+        private int pin;
+        private double balance;
+        private ArrayList<String> history = new ArrayList<>();
+
+        Account(String name, int pin, double balance) {
+            this.name = name;
+            this.pin = pin;
+            this.balance = balance;
+            history.add("Account created with balance: ₹" + balance);
+        }
+
+        boolean login(int enteredPin) {
+            return enteredPin == pin;
+        }
+
+        void deposit(double amount) {
+            if (amount <= 0) {
+                System.out.println("Invalid amount.");
+                return;
+            }
+            balance += amount;
+            history.add("Deposited: ₹" + amount);
+            System.out.println("Deposit successful.");
+        }
+
+        void withdraw(double amount) {
+            if (amount <= 0) {
+                System.out.println("Invalid amount.");
+                return;
+            }
+            if (amount > balance) {
+                System.out.println("Insufficient balance.");
+                return;
+            }
+            balance -= amount;
+            history.add("Withdrawn: ₹" + amount);
+            System.out.println("Withdrawal successful.");
+        }
+
+        void checkBalance() {
+            System.out.printf("Current Balance: ₹%.2f%n", balance);
+        }
+
+        void changePin(int oldPin, int newPin) {
+            if (oldPin != pin) {
+                System.out.println("Incorrect current PIN.");
+                return;
+            }
+            pin = newPin;
+            history.add("PIN changed");
+            System.out.println("PIN changed successfully.");
+        }
+
+        void printHistory() {
+            System.out.println("\n----- Transaction History -----");
+            for (String s : history) {
+                System.out.println(s);
+            }
+        }
+
+        String getName() {
+            return name;
+        }
+    }
+
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+
+        Account account = new Account("Nikitha", 1234, 10000);
+
+        System.out.println("==================================");
+        System.out.println("        ATM BANKING SYSTEM");
+        System.out.println("==================================");
+
+        int attempts = 3;
+        while (attempts > 0) {
+            System.out.print("Enter 4-digit PIN: ");
+            int entered = sc.nextInt();
+            if (account.login(entered)) {
+                System.out.println("\nWelcome, " + account.getName() + "!");
+                while (true) {
+                    System.out.println("\n========= MENU =========");
+                    System.out.println("1. Check Balance");
+                    System.out.println("2. Deposit Money");
+                    System.out.println("3. Withdraw Money");
+                    System.out.println("4. Change PIN");
+                    System.out.println("5. Transaction History");
+                    System.out.println("6. Exit");
+                    System.out.print("Choose: ");
+                    int choice = sc.nextInt();
+
+                    switch (choice) {
+                        case 1:
+                            account.checkBalance();
+                            break;
+                        case 2:
+                            System.out.print("Enter amount: ₹");
+                            account.deposit(sc.nextDouble());
+                            break;
+                        case 3:
+                            System.out.print("Enter amount: ₹");
+                            account.withdraw(sc.nextDouble());
+                            break;
+                        case 4:
+                            System.out.print("Enter current PIN: ");
+                            int oldPin = sc.nextInt();
+                            System.out.print("Enter new PIN: ");
+                            int newPin = sc.nextInt();
+                            account.changePin(oldPin, newPin);
+                            break;
+                        case 5:
+                            account.printHistory();
+                            break;
+                        case 6:
+                            System.out.println("Thank you for using the ATM!");
+                            sc.close();
+                            return;
+                        default:
+                            System.out.println("Invalid choice.");
+                    }
+                }
+            } else {
+                attempts--;
+                System.out.println("Wrong PIN. Attempts left: " + attempts);
+            }
+        }
+
+        System.out.println("Too many failed attempts. Account locked.");
+        sc.close();
+    }
+}
