@@ -1,0 +1,106 @@
+import java.io.*;
+import java.nio.file.*;
+import java.util.*;
+
+public class FileOrganizer {
+
+    private static final String ROOT = "OrganizedFiles";
+
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+
+        while (true) {
+            System.out.println("\n=== FILE ORGANIZER ===");
+            System.out.println("1. Organize Folder");
+            System.out.println("2. View Statistics");
+            System.out.println("3. Exit");
+            System.out.print("Choice: ");
+
+            int choice = Integer.parseInt(sc.nextLine());
+
+            switch (choice) {
+                case 1:
+                    System.out.print("Folder Path: ");
+                    organize(sc.nextLine());
+                    break;
+                case 2:
+                    stats();
+                    break;
+                case 3:
+                    System.out.println("Goodbye!");
+                    return;
+                default:
+                    System.out.println("Invalid choice");
+            }
+        }
+    }
+
+    static void organize(String folderPath) {
+        File folder = new File(folderPath);
+        if (!folder.exists() || !folder.isDirectory()) {
+            System.out.println("Folder not found.");
+            return;
+        }
+        new File(ROOT).mkdirs();
+        File[] files = folder.listFiles();
+        if (files == null) return;
+
+        int moved = 0;
+
+        for (File file : files) {
+            if (!file.isFile()) continue;
+            String ext = extension(file.getName());
+            String category = category(ext);
+            File target = new File(ROOT + File.separator + category);
+            target.mkdirs();
+            try {
+                Files.copy(file.toPath(),
+                        target.toPath().resolve(file.getName()),
+                        StandardCopyOption.REPLACE_EXISTING);
+                moved++;
+                System.out.println(file.getName() + " -> " + category);
+            } catch (IOException e) {
+                System.out.println("Failed: " + file.getName());
+            }
+        }
+        System.out.println("Files Organized: " + moved);
+    }
+
+    static String extension(String name) {
+        int dot = name.lastIndexOf('.');
+        if (dot == -1) return "";
+        return name.substring(dot + 1).toLowerCase();
+    }
+
+    static String category(String ext) {
+        switch (ext) {
+            case "jpg": case "jpeg": case "png": case "gif": return "Images";
+            case "mp4": case "avi": case "mkv": return "Videos";
+            case "mp3": case "wav": return "Audio";
+            case "pdf": case "doc": case "docx": case "txt":
+            case "ppt": case "pptx": case "xls": case "xlsx": return "Documents";
+            case "zip": case "rar": case "7z": return "Archives";
+            case "java": case "py": case "cpp": case "c":
+            case "html": case "css": case "js": return "Code";
+            default: return "Others";
+        }
+    }
+
+    static void stats() {
+        File root = new File(ROOT);
+        if (!root.exists()) {
+            System.out.println("Nothing organized yet.");
+            return;
+        }
+        int total = 0;
+        for (File f : Objects.requireNonNull(root.listFiles())) {
+            if (f.isDirectory()) {
+                int count = Objects.requireNonNull(f.list()).length;
+                total += count;
+                System.out.println(f.getName() + " : " + count);
+            }
+        }
+        System.out.println("Total Files: " + total);
+    }
+}
+// Future enhancement
