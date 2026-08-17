@@ -1,0 +1,724 @@
+# HashMap Internals in Java
+
+I initially thought `HashMap` was just:
+
+```java
+HashMap<Key, Value>
+```
+
+and that was it.
+
+But internally, there is quite a bit happening when we put something into a `HashMap`.
+
+This note is about understanding **what actually happens inside a HashMap**.
+
+---
+
+## 1. What is a HashMap?
+
+`HashMap` stores data in the form of:
+
+```text
+Key → Value
+```
+
+Example:
+
+```java
+HashMap<Integer, String> students = new HashMap<>();
+
+students.put(101, "Nikitha");
+students.put(102, "Rahul");
+```
+
+Conceptually:
+
+```text
+101 → Nikitha
+102 → Rahul
+```
+
+The important thing is that HashMap doesn't search through every key one by one.
+
+It uses **hashing** to find where the key should be stored.
+
+---
+
+# 2. What happens when we call `put()`?
+
+When we write:
+
+```java
+map.put("Java", 100);
+```
+
+roughly, the process is:
+
+```text
+Key
+ ↓
+hashCode()
+ ↓
+Hash calculation
+ ↓
+Bucket/index
+ ↓
+Store key + value
+```
+
+So the key's `hashCode()` is important because it helps determine where the entry goes.
+
+---
+
+# 3. What is a bucket?
+
+You can imagine a HashMap as having multiple buckets.
+
+```text
+Bucket 0
+Bucket 1
+Bucket 2
+Bucket 3
+Bucket 4
+...
+```
+
+When we insert a key, Java calculates a location for it.
+
+For example:
+
+```text
+"Java"
+   ↓
+hashCode()
+   ↓
+calculated index
+   ↓
+Bucket 3
+```
+
+The actual implementation is more complicated than this simplified picture, but the basic idea is:
+
+> Hashing helps locate the bucket instead of searching the entire map.
+
+---
+
+# 4. What if two keys go to the same bucket?
+
+This is called a **collision**.
+
+For example:
+
+```text
+Key A → Bucket 4
+Key B → Bucket 4
+```
+
+Both keys cannot simply replace each other because they are different keys.
+
+So Java needs a way to store multiple entries in the same bucket.
+
+Historically this was handled using linked structures.
+
+In modern Java, buckets can use a **linked list or a tree structure**, depending on the situation.
+
+---
+
+# 5. Collision does NOT mean duplicate keys
+
+This distinction is important.
+
+Suppose:
+
+```java
+map.put("A", 10);
+map.put("B", 20);
+```
+
+Even if `"A"` and `"B"` happen to end up in the same bucket, they are still different keys.
+
+Conceptually:
+
+```text
+Bucket
+   ↓
+[A → 10] → [B → 20]
+```
+
+So:
+
+```text
+Same bucket ≠ Same key
+```
+
+---
+
+# 6. Where does `equals()` come in?
+
+This is one of the most important parts.
+
+`hashCode()` helps find the bucket.
+
+But Java still needs to determine:
+
+> "Is this actually the same key?"
+
+That's where:
+
+```java
+equals()
+```
+
+comes in.
+
+A simplified way of thinking about lookup:
+
+```text
+hashCode()
+   ↓
+Find possible bucket
+   ↓
+Compare keys
+   ↓
+equals()
+   ↓
+Found / Not found
+```
+
+So both methods have different jobs.
+
+```text
+hashCode() → Where should I look?
+
+equals()   → Is this actually the key I'm looking for?
+```
+
+---
+
+# 7. Why must `equals()` and `hashCode()` agree?
+
+Suppose two objects are considered equal:
+
+```java
+a.equals(b) == true
+```
+
+Then they **must have the same hash code**:
+
+```java
+a.hashCode() == b.hashCode()
+```
+
+Otherwise, HashMap could send them to different buckets.
+
+That would make searching unreliable.
+
+The rule is:
+
+> If two objects are equal, their hash codes must be equal.
+
+The reverse is NOT necessarily true.
+
+```text
+Same hashCode
+     ↓
+Does NOT guarantee
+     ↓
+equals() == true
+```
+
+That's because collisions can happen.
+
+---
+
+# 8. A simple example
+
+Consider:
+
+```java
+class Student {
+    int id;
+
+    Student(int id) {
+        this.id = id;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        Student s = (Student) obj;
+        return this.id == s.id;
+    }
+
+    @Override
+    public int hashCode() {
+        return id;
+    }
+}
+```
+
+Now:
+
+```java
+Student s1 = new Student(101);
+Student s2 = new Student(101);
+```
+
+We have:
+
+```java
+s1.equals(s2)
+```
+
+which is:
+
+```text
+true
+```
+
+and:
+
+```java
+s1.hashCode() == s2.hashCode()
+```
+
+which should also be:
+
+```text
+true
+```
+
+So HashMap can correctly treat them as the same logical key.
+
+---
+
+# 9. What happens during `get()`?
+
+Suppose:
+
+```java
+map.get("Java");
+```
+
+Conceptually:
+
+```text
+"Java"
+   ↓
+hashCode()
+   ↓
+Find bucket
+   ↓
+Look at entries in bucket
+   ↓
+Compare keys using equals()
+   ↓
+Return value
+```
+
+This is why HashMap can usually retrieve values very quickly.
+
+---
+
+# 10. Why is HashMap usually O(1)?
+
+Under normal conditions, operations such as:
+
+```java
+put()
+get()
+remove()
+containsKey()
+```
+
+are generally considered:
+
+```text
+Average → O(1)
+```
+
+because hashing allows Java to jump close to the required location instead of checking every element.
+
+But this is an **average-case idea**, not a guarantee that every operation always takes exactly constant time.
+
+Bad hashing and many collisions can affect performance.
+
+---
+
+# 11. What happens with too many collisions?
+
+If too many entries end up in the same bucket, searching that bucket becomes slower.
+
+Modern Java can convert a heavily populated bucket into a **balanced tree structure** under certain conditions.
+
+So conceptually:
+
+```text
+Normal bucket:
+
+Entry → Entry → Entry → Entry
+
+
+Heavy collisions:
+
+        Entry
+       /     \
+   Entry     Entry
+```
+
+This helps improve lookup performance when a bucket becomes heavily populated.
+
+---
+
+# 12. What is load factor?
+
+HashMap doesn't wait until every bucket is completely full.
+
+It keeps track of how much of the table is being used.
+
+The commonly known default load factor is:
+
+```text
+0.75
+```
+
+This means the map generally resizes when the number of entries crosses roughly:
+
+```text
+capacity × load factor
+```
+
+For example:
+
+```text
+Capacity = 16
+
+16 × 0.75 = 12
+```
+
+So around 12 entries, resizing can be triggered.
+
+---
+
+# 13. What happens during resizing?
+
+When the HashMap grows beyond its threshold, it increases its internal capacity.
+
+Conceptually:
+
+```text
+Before:
+
+16 buckets
+
+        ↓ resize
+
+After:
+
+32 buckets
+```
+
+The entries then have to be redistributed according to the new table.
+
+This operation is more expensive than a normal `put()`.
+
+So repeatedly resizing a large HashMap can be avoided by choosing a suitable initial capacity when you already know approximately how much data you'll store.
+
+---
+
+# 14. Why doesn't HashMap simply use the key as an index?
+
+Imagine:
+
+```java
+map.put(1000000, "A");
+```
+
+We can't reasonably create a million array positions just because the key is `1000000`.
+
+Hashing converts a potentially large key space into a manageable bucket space.
+
+```text
+Huge range of possible keys
+          ↓
+       Hashing
+          ↓
+Limited number of buckets
+```
+
+---
+
+# 15. A dangerous mistake: mutable keys
+
+This is one of the things that is easy to miss.
+
+Suppose an object is used as a key:
+
+```java
+HashMap<Student, String> map;
+```
+
+and its fields are used to calculate:
+
+```java
+hashCode()
+```
+
+If those fields are changed **after insertion**, the object may effectively belong to a different bucket.
+
+Example idea:
+
+```text
+Insert key
+   ↓
+hashCode = 10
+   ↓
+Bucket 10
+
+Change key's important field
+   ↓
+hashCode = 25
+   ↓
+Now lookup may search Bucket 25
+```
+
+But the object is still physically associated with where it was originally stored.
+
+This is why keys used in HashMaps should generally be **immutable**, or at least the fields involved in `equals()` and `hashCode()` should not change while the object is being used as a key.
+
+---
+
+# 16. Why String works so well as a HashMap key
+
+`String` is commonly used as a key because it is immutable.
+
+Example:
+
+```java
+HashMap<String, Integer> marks = new HashMap<>();
+
+marks.put("Math", 95);
+marks.put("Java", 90);
+```
+
+Once a String object is created, its contents don't change.
+
+That makes it much safer as a HashMap key.
+
+---
+
+# 17. Can HashMap have a null key?
+
+Yes.
+
+A `HashMap` can contain:
+
+```text
+one null key
+multiple null values
+```
+
+Example:
+
+```java
+map.put(null, 100);
+map.put("Java", null);
+```
+
+So:
+
+```text
+null → 100
+Java → null
+```
+
+is valid.
+
+---
+
+# 18. HashMap is NOT synchronized
+
+`HashMap` is not designed for automatic thread-safe access.
+
+So if multiple threads are modifying the same map concurrently, simply using a normal HashMap does not make the operation safe.
+
+For concurrent situations, Java provides other options such as:
+
+```java
+ConcurrentHashMap
+```
+
+The important point is:
+
+> HashMap and ConcurrentHashMap are not interchangeable just because both store key-value pairs.
+
+---
+
+# 19. HashMap does not guarantee ordering
+
+Don't assume:
+
+```java
+map.put("A", 1);
+map.put("B", 2);
+map.put("C", 3);
+```
+
+will always give:
+
+```text
+A
+B
+C
+```
+
+when iterating.
+
+If insertion order matters, another collection may be more appropriate, such as:
+
+```java
+LinkedHashMap
+```
+
+If sorted order is required:
+
+```java
+TreeMap
+```
+
+---
+
+# 20. HashMap vs LinkedHashMap vs TreeMap
+
+| Collection      | Main idea                                    |
+| --------------- | -------------------------------------------- |
+| `HashMap`       | Fast key-value lookup, no ordering guarantee |
+| `LinkedHashMap` | Maintains insertion/access ordering          |
+| `TreeMap`       | Keeps keys sorted                            |
+
+So don't choose a Map only because:
+
+> "HashMap is fastest."
+
+Choose based on what the application actually needs.
+
+---
+
+# 21. The mental model I use
+
+Whenever I see:
+
+```java
+map.put(key, value);
+```
+
+I think:
+
+```text
+                 key
+                  ↓
+             hashCode()
+                  ↓
+             hash calculation
+                  ↓
+               bucket
+                  ↓
+          ┌───────┴───────┐
+          ↓               ↓
+       empty          existing entries
+          ↓               ↓
+       insert        compare keys
+                          ↓
+                       equals()
+                          ↓
+                  same key / collision
+```
+
+And for:
+
+```java
+map.get(key);
+```
+
+I think:
+
+```text
+key
+ ↓
+hash
+ ↓
+bucket
+ ↓
+equals()
+ ↓
+value
+```
+
+---
+
+# 22. The biggest takeaway
+
+A HashMap isn't simply:
+
+```text
+Key → Value
+```
+
+Internally, the important relationship is:
+
+```text
+              hashCode()
+Key ─────────────────────────→ Bucket
+                                ↓
+                         possible entries
+                                ↓
+                             equals()
+                                ↓
+                              Value
+```
+
+So if you understand these four things:
+
+```text
+1. Hashing
+2. Buckets
+3. hashCode()
+4. equals()
+```
+
+you understand the core idea behind how HashMap works.
+
+---
+
+## Quick Revision
+
+```text
+HashMap
+│
+├── Stores key-value pairs
+│
+├── Uses hashing
+│
+├── hashCode() helps locate a bucket
+│
+├── equals() helps identify the exact key
+│
+├── Collisions can happen
+│
+├── Heavy collision buckets can become tree structures
+│
+├── Default load factor = 0.75
+│
+├── Resizing happens when threshold is crossed
+│
+├── Allows one null key
+│
+├── Does not guarantee ordering
+│
+├── Is not synchronized
+│
+└── Keys should ideally be immutable
+```
+
+## One line to remember
+
+> **`hashCode()` helps you find where to look; `equals()` helps you confirm what you're looking at.**
