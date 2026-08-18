@@ -1,0 +1,814 @@
+# Java Memory — Stack vs Heap
+
+When I first learned Java, I used to think:
+
+> "Variables are stored in memory and objects are stored in memory."
+
+That is technically true, but it doesn't explain much.
+
+A better way to understand Java memory is to look at **what happens when a program actually runs**.
+
+---
+
+## 1. The basic idea
+
+A simplified view of Java memory:
+
+```text
+                 JVM Memory
+                     │
+          ┌──────────┴──────────┐
+          │                     │
+        STACK                  HEAP
+          │                     │
+     Method calls          Objects
+     Local variables       Instance data
+     References            Arrays
+     Each thread           Shared memory
+```
+
+This is a simplified model, but it is very useful for understanding Java programs.
+
+---
+
+# 2. What is the Stack?
+
+The **stack** is mainly associated with method execution.
+
+Whenever a method is called, a new **stack frame** is created for that method.
+
+Example:
+
+```java
+public class Main {
+
+    static void greet() {
+        int age = 18;
+        System.out.println(age);
+    }
+
+    public static void main(String[] args) {
+        greet();
+    }
+}
+```
+
+Conceptually:
+
+```text
+main()
+│
+├── args
+│
+└── greet()
+      │
+      └── age = 18
+```
+
+When `greet()` finishes, its stack frame is removed.
+
+So:
+
+```text
+method starts
+     ↓
+stack frame created
+     ↓
+method executes
+     ↓
+method ends
+     ↓
+stack frame removed
+```
+
+---
+
+# 3. What is a Stack Frame?
+
+A stack frame can be thought of as the memory associated with one method call.
+
+It can contain things such as:
+
+* Local variables
+* References
+* Intermediate values
+* Information needed to return from the method
+
+For example:
+
+```java
+static void calculate() {
+
+    int x = 10;
+    int y = 20;
+
+    int result = x + y;
+}
+```
+
+During the method call, the stack contains information related to:
+
+```text
+calculate()
+│
+├── x
+├── y
+└── result
+```
+
+Once `calculate()` finishes, its frame is gone.
+
+---
+
+# 4. What is the Heap?
+
+The **heap** is where objects and arrays are generally allocated.
+
+Example:
+
+```java
+Student s = new Student();
+```
+
+There are two different things here:
+
+```text
+s
+```
+
+and
+
+```text
+new Student()
+```
+
+The object created using `new` is allocated on the heap.
+
+A simplified picture:
+
+```text
+STACK                         HEAP
+
+s ───────────────────────→   Student object
+                             
+                             name
+                             age
+                             ...
+```
+
+The variable `s` is a **reference** to the object.
+
+---
+
+# 5. Reference ≠ Object
+
+This is one of the most important things to understand.
+
+Look at:
+
+```java
+Student s = new Student();
+```
+
+It does NOT mean:
+
+```text
+s = object
+```
+
+A better mental model is:
+
+```text
+s = reference
+
+new Student() = object
+```
+
+So:
+
+```text
+STACK                         HEAP
+
+s ───────────────────────→   Student object
+```
+
+The reference tells the program where the object can be found.
+
+---
+
+# 6. Multiple references can point to the same object
+
+Consider:
+
+```java
+Student s1 = new Student();
+Student s2 = s1;
+```
+
+Now:
+
+```text
+STACK                         HEAP
+
+s1 ───────────────┐
+                  │
+                  ↓
+                Student
+                  ↑
+                  │
+s2 ───────────────┘
+```
+
+There is only **one Student object**.
+
+There are two references pointing to it.
+
+This is why changing the object through one reference can be visible through the other.
+
+---
+
+# 7. Example
+
+```java
+class Student {
+    String name;
+}
+
+public class Main {
+
+    public static void main(String[] args) {
+
+        Student s1 = new Student();
+        Student s2 = s1;
+
+        s1.name = "Nikitha";
+
+        System.out.println(s2.name);
+    }
+}
+```
+
+Output:
+
+```text
+Nikitha
+```
+
+Why?
+
+Because:
+
+```text
+s1 ──┐
+     ├──→ same Student object
+s2 ──┘
+```
+
+Changing the object through `s1` changes the same object that `s2` refers to.
+
+---
+
+# 8. What happens when a method calls another method?
+
+Consider:
+
+```java
+static void first() {
+    second();
+}
+
+static void second() {
+    int x = 10;
+}
+```
+
+When `main()` calls `first()`:
+
+```text
+STACK
+
+┌─────────────┐
+│ second()    │
+│ x = 10      │
+├─────────────┤
+│ first()     │
+├─────────────┤
+│ main()      │
+└─────────────┘
+```
+
+The stack follows **LIFO**:
+
+> Last In, First Out.
+
+So `second()` finishes first.
+
+Then its frame is removed.
+
+```text
+second()
+   ↓
+removed
+
+first()
+   ↓
+continues
+
+main()
+```
+
+---
+
+# 9. Why recursion can cause StackOverflowError
+
+Consider:
+
+```java
+static void hello() {
+    hello();
+}
+```
+
+There is no stopping condition.
+
+Every call creates another stack frame:
+
+```text
+hello()
+hello()
+hello()
+hello()
+hello()
+...
+```
+
+Eventually the stack cannot keep adding frames.
+
+Java can then throw:
+
+```text
+StackOverflowError
+```
+
+So recursion isn't inherently bad.
+
+The problem is **unbounded recursion**.
+
+---
+
+# 10. Heap memory behaves differently
+
+Consider:
+
+```java
+Student s = new Student();
+```
+
+The object lives independently of the method's local reference.
+
+If the method ends:
+
+```text
+Before:
+
+STACK                      HEAP
+
+s ───────────────────→    Student object
+```
+
+After the local reference disappears:
+
+```text
+STACK                      HEAP
+
+                         Student object
+                         ↑
+                         no reference
+```
+
+If there are no reachable references to the object, it can become **eligible for garbage collection**.
+
+---
+
+# 11. Garbage Collection
+
+Java has automatic memory management.
+
+You don't normally write:
+
+```java
+delete student;
+```
+
+like you might in C++.
+
+Instead, objects that are no longer reachable can eventually be cleaned up by the **Garbage Collector (GC)**.
+
+Example:
+
+```java
+Student s = new Student();
+
+s = null;
+```
+
+Conceptually:
+
+```text
+Before:
+
+s ─────────→ Student object
+
+
+After:
+
+s = null
+
+Student object
+      ↑
+  no reference
+```
+
+The object may now be eligible for garbage collection.
+
+Important:
+
+> Eligible for GC does NOT mean "deleted immediately."
+
+Java decides when garbage collection actually happens.
+
+---
+
+# 12. A common misunderstanding about `null`
+
+When we write:
+
+```java
+s = null;
+```
+
+we are not directly destroying the object.
+
+We are changing the reference.
+
+Before:
+
+```text
+s ─────→ Object
+```
+
+After:
+
+```text
+s ─────→ null
+
+Object
+```
+
+If no other reference points to that object, it becomes unreachable.
+
+---
+
+# 13. Primitive variables
+
+Example:
+
+```java
+int age = 18;
+```
+
+The local variable `age` is part of the method's execution state.
+
+For local primitive variables, the simplified mental model is:
+
+```text
+STACK
+
+age = 18
+```
+
+But avoid taking the rule:
+
+> "Every primitive always lives on the stack."
+
+as universally true.
+
+The JVM is more complicated than this simplified diagram, and actual implementation details can vary.
+
+The useful beginner model is:
+
+> Local variables and method execution → think Stack.
+
+> Objects and arrays → think Heap.
+
+---
+
+# 14. Arrays are objects too
+
+This is an easy one to forget.
+
+```java
+int[] numbers = new int[5];
+```
+
+The array itself is an object and is generally allocated on the heap.
+
+Conceptually:
+
+```text
+STACK                         HEAP
+
+numbers ───────────────→     [0, 0, 0, 0, 0]
+```
+
+The reference is local to the method, while the array is an object.
+
+---
+
+# 15. Strings can make this confusing
+
+Consider:
+
+```java
+String name = "Java";
+```
+
+Strings have special behavior because Java maintains a **String Pool**.
+
+So don't blindly apply:
+
+```text
+String = normal heap object
+```
+
+without considering string pooling and the JVM's handling of strings.
+
+For example:
+
+```java
+String a = "Java";
+String b = "Java";
+```
+
+can refer to the same pooled String object.
+
+```text
+a ──┐
+    ├──→ "Java"
+b ──┘
+```
+
+This is one reason `String` deserves its own topic.
+
+---
+
+# 16. Stack vs Heap
+
+| Stack                                   | Heap                              |
+| --------------------------------------- | --------------------------------- |
+| Associated with method execution        | Stores objects and arrays         |
+| Contains stack frames                   | Shared across threads             |
+| Stores local execution data             | Objects can outlive a method call |
+| Automatically managed as methods return | Managed by Garbage Collector      |
+| Very fast access model                  | Generally larger memory area      |
+| Each thread has its own stack           | Heap is shared between threads    |
+
+---
+
+# 17. The important part: threads
+
+This is something I initially didn't think about.
+
+The stack is **per thread**.
+
+The heap is generally **shared by threads**.
+
+Conceptually:
+
+```text
+              HEAP
+        ┌───────────────┐
+        │ Objects       │
+        │ Arrays        │
+        └───────────────┘
+          ↑           ↑
+          │           │
+      Thread 1     Thread 2
+       Stack        Stack
+```
+
+This is one reason multithreading introduces synchronization problems.
+
+Two threads can potentially access the same object in the heap.
+
+---
+
+# 18. Example with two threads
+
+Imagine:
+
+```java
+class Counter {
+    int value = 0;
+}
+```
+
+and two threads both access the same `Counter` object.
+
+Conceptually:
+
+```text
+Thread 1 Stack       Thread 2 Stack
+      │                    │
+      └────────┐    ┌──────┘
+               ↓    ↓
+             HEAP
+          Counter object
+          value = 0
+```
+
+Both threads can interact with the same object.
+
+This is where concepts such as:
+
+* synchronization
+* race conditions
+* locks
+* thread safety
+
+become important.
+
+---
+
+# 19. StackOverflowError vs OutOfMemoryError
+
+These two are easy to confuse.
+
+### `StackOverflowError`
+
+Usually associated with exhausting the stack.
+
+Example:
+
+```java
+static void test() {
+    test();
+}
+```
+
+Too many nested method calls.
+
+---
+
+### `OutOfMemoryError`
+
+Associated with running out of available memory for an allocation.
+
+A conceptual example:
+
+```java
+List<byte[]> list = new ArrayList<>();
+
+while (true) {
+    list.add(new byte[1024 * 1024]);
+}
+```
+
+This keeps allocating memory and can eventually exhaust available heap memory.
+
+So:
+
+```text
+StackOverflowError
+→ Stack problem
+
+
+OutOfMemoryError
+→ Memory allocation problem
+```
+
+---
+
+# 20. One diagram to remember everything
+
+```text
+                         JVM
+                          │
+              ┌───────────┴───────────┐
+              │                       │
+           STACK                    HEAP
+              │                       │
+       Per thread               Shared area
+              │                       │
+        ┌─────┴─────┐          ┌──────┴──────┐
+        │           │          │             │
+    Method       Local      Objects        Arrays
+    frames       data          │
+        │                      │
+        │                  ┌───┴────┐
+        │                  │ Object │
+        │                  │ fields │
+        │                  └────────┘
+        │
+        └──── references ───────────────→ objects
+```
+
+---
+
+# 21. My mental model
+
+When I see:
+
+```java
+Student s = new Student();
+```
+
+I don't just read it as one line.
+
+I think:
+
+```text
+Student object
+      ↓
+created in Heap
+
+s
+↓
+reference to that object
+```
+
+When I see:
+
+```java
+someMethod();
+```
+
+I think:
+
+```text
+new stack frame
+      ↓
+method executes
+      ↓
+frame removed when method returns
+```
+
+When I see:
+
+```java
+s = null;
+```
+
+I think:
+
+```text
+reference removed
+      ↓
+check whether object is still reachable
+      ↓
+if unreachable → eligible for GC
+```
+
+---
+
+# Quick Revision
+
+```text
+STACK
+│
+├── Per thread
+├── Method calls
+├── Stack frames
+├── Local execution data
+└── Recursion can exhaust it
+
+
+HEAP
+│
+├── Shared between threads
+├── Objects
+├── Arrays
+├── Objects can survive method return
+└── Garbage Collector manages unreachable objects
+```
+
+## One thing I don't want to forget
+
+> **A reference is not the object itself.**
+
+For:
+
+```java
+Student s = new Student();
+```
+
+think:
+
+```text
+s ─────────→ Student object
+reference      object
+```
+
+Understanding this makes a lot of other Java concepts easier:
+
+**OOP → references → objects → collections → garbage collection → multithreading.**
