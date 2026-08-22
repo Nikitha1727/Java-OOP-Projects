@@ -1,0 +1,888 @@
+# Spring Boot — Dependency Injection & IoC 🌱
+
+When I first started Spring Boot, I kept seeing things like:
+
+```java
+@Service
+@Autowired
+```
+
+and constructor parameters that Spring somehow "provided".
+
+The important question was:
+
+> **Who creates these objects, and how does Spring know what to put where?**
+
+This is where **IoC (Inversion of Control)** and **Dependency Injection (DI)** come in.
+
+---
+
+# 1. What is a Dependency?
+
+Suppose I have:
+
+```java
+class StudentController {
+
+    StudentService service;
+}
+```
+
+The `StudentController` needs `StudentService` to do its work.
+
+So:
+
+```text
+StudentController
+       ↓
+needs
+       ↓
+StudentService
+```
+
+`StudentService` is a **dependency** of `StudentController`.
+
+---
+
+# 2. Without Dependency Injection
+
+Normally in Java, I could create the object myself:
+
+```java
+class StudentController {
+
+    StudentService service;
+
+    StudentController() {
+        service = new StudentService();
+    }
+}
+```
+
+Here, the controller is responsible for creating its dependency.
+
+```text
+StudentController
+       │
+       └── creates → StudentService
+```
+
+This works, but it creates tight coupling.
+
+---
+
+# 3. What Spring does differently
+
+With Spring, instead of the controller creating the service, Spring can create and provide it.
+
+```java
+@Service
+public class StudentService {
+}
+```
+
+Then:
+
+```java
+@RestController
+public class StudentController {
+
+    private final StudentService service;
+
+    public StudentController(StudentService service) {
+        this.service = service;
+    }
+}
+```
+
+Now the controller doesn't say:
+
+```java
+new StudentService()
+```
+
+Spring provides the object.
+
+```text
+             Spring
+               │
+               ↓
+        StudentService
+               │
+               ↓
+       StudentController
+```
+
+This is **Dependency Injection**.
+
+---
+
+# 4. What is IoC?
+
+IoC means:
+
+> **Inversion of Control**
+
+Normally, my code controls object creation:
+
+```text
+My Code
+   ↓
+new StudentService()
+```
+
+With Spring:
+
+```text
+Spring Container
+       ↓
+creates/manages StudentService
+       ↓
+provides it to my code
+```
+
+So the control over object creation and wiring is moved to the framework.
+
+That's the basic idea behind **Inversion of Control**.
+
+---
+
+# 5. Dependency Injection vs IoC
+
+These two terms are related, but they aren't exactly the same thing.
+
+### IoC
+
+A broader idea:
+
+> The framework takes control of certain responsibilities that the application would otherwise manage itself.
+
+### Dependency Injection
+
+One way of implementing that idea:
+
+> Dependencies are provided to an object instead of the object creating them itself.
+
+So:
+
+```text
+IoC
+ ↓
+Dependency Injection
+ ↓
+Spring provides required objects
+```
+
+---
+
+# 6. What is a Spring Bean?
+
+A **Bean** is an object that is created and managed by the Spring IoC container.
+
+For example:
+
+```java
+@Service
+public class StudentService {
+}
+```
+
+Spring can create a `StudentService` object and manage it as a Bean.
+
+Conceptually:
+
+```text
+Spring Container
+       │
+       ├── StudentService Bean
+       ├── StudentController Bean
+       └── Other Beans
+```
+
+The important part is:
+
+> Not every Java object is automatically a Spring Bean.
+
+It needs to be registered with the Spring container, commonly through annotations such as:
+
+```java
+@Component
+@Service
+@Repository
+@Controller
+@RestController
+```
+
+or through explicit `@Bean` methods.
+
+---
+
+# 7. `@Component`
+
+`@Component` is a general-purpose stereotype annotation.
+
+Example:
+
+```java
+@Component
+public class EmailService {
+}
+```
+
+Spring can detect this class during component scanning and create a Bean from it.
+
+---
+
+# 8. `@Service`
+
+`@Service` is commonly used for the service/business logic layer.
+
+```java
+@Service
+public class StudentService {
+
+    public String getStudent() {
+        return "Student";
+    }
+}
+```
+
+Technically, `@Service` is a specialized form of `@Component`.
+
+So Spring can discover it as a Bean.
+
+---
+
+# 9. `@Repository`
+
+`@Repository` is commonly used for persistence/database-related classes.
+
+```java
+@Repository
+public class StudentRepository {
+}
+```
+
+It communicates the role of the class clearly.
+
+With Spring Data JPA, you may often see:
+
+```java
+public interface StudentRepository
+        extends JpaRepository<Student, Long> {
+}
+```
+
+---
+
+# 10. `@Controller` and `@RestController`
+
+For web applications:
+
+```java
+@Controller
+```
+
+is commonly used for MVC controllers.
+
+For REST APIs:
+
+```java
+@RestController
+```
+
+is commonly used.
+
+A simplified way to remember:
+
+```text
+@Component
+    ↓
+General Spring Bean
+
+@Service
+    ↓
+Business logic
+
+@Repository
+    ↓
+Persistence
+
+@Controller
+    ↓
+Web controller
+
+@RestController
+    ↓
+REST API controller
+```
+
+---
+
+# 11. Constructor Injection
+
+This is the style I want to get comfortable with.
+
+```java
+@Service
+public class StudentService {
+}
+```
+
+Then:
+
+```java
+@RestController
+public class StudentController {
+
+    private final StudentService studentService;
+
+    public StudentController(StudentService studentService) {
+        this.studentService = studentService;
+    }
+}
+```
+
+Spring sees that `StudentController` requires a `StudentService`.
+
+If there is a suitable Spring Bean, Spring supplies it through the constructor.
+
+---
+
+# 12. Why `final`?
+
+Notice:
+
+```java
+private final StudentService studentService;
+```
+
+The reference is assigned through the constructor:
+
+```java
+public StudentController(StudentService studentService) {
+    this.studentService = studentService;
+}
+```
+
+After construction, the reference can't be reassigned.
+
+This makes the dependency explicit and helps communicate:
+
+> This controller requires a StudentService.
+
+---
+
+# 13. What about `@Autowired`?
+
+You may also see:
+
+```java
+@Autowired
+public StudentController(StudentService studentService) {
+    this.studentService = studentService;
+}
+```
+
+In modern Spring, if the class has a **single constructor**, `@Autowired` is generally not necessary.
+
+So this:
+
+```java
+public StudentController(StudentService studentService) {
+    this.studentService = studentService;
+}
+```
+
+is enough.
+
+This is one reason constructor injection is clean.
+
+---
+
+# 14. Field Injection
+
+Another style is:
+
+```java
+@Autowired
+private StudentService studentService;
+```
+
+This is called **field injection**.
+
+It is short, but constructor injection is generally preferred for required dependencies because the dependency is explicit and the object can be constructed with all required dependencies.
+
+Compare:
+
+```java
+@Autowired
+private StudentService service;
+```
+
+with:
+
+```java
+private final StudentService service;
+
+public StudentController(StudentService service) {
+    this.service = service;
+}
+```
+
+I prefer the second style for understanding what's actually happening.
+
+---
+
+# 15. Constructor Injection vs Field Injection
+
+| Constructor Injection                          | Field Injection                            |
+| ---------------------------------------------- | ------------------------------------------ |
+| Dependency is visible in constructor           | Dependency is hidden in a field            |
+| Can use `final`                                | Usually cannot use `final` in the same way |
+| Object requires dependency during construction | Dependency is injected after construction  |
+| Easier to reason about                         | Shorter                                    |
+| Commonly preferred                             | Often seen in older/tutorial code          |
+
+---
+
+# 16. Multiple Dependencies
+
+A controller can have more than one dependency.
+
+```java
+@RestController
+public class StudentController {
+
+    private final StudentService studentService;
+    private final EmailService emailService;
+
+    public StudentController(
+            StudentService studentService,
+            EmailService emailService) {
+
+        this.studentService = studentService;
+        this.emailService = emailService;
+    }
+}
+```
+
+Now Spring has to provide both:
+
+```text
+Spring Container
+      │
+      ├── StudentService
+      │
+      └── EmailService
+             │
+             ↓
+      StudentController
+```
+
+---
+
+# 17. What if Spring finds multiple Beans?
+
+This is where things get interesting.
+
+Suppose:
+
+```java
+@Component
+class GmailService implements EmailService {
+}
+```
+
+and:
+
+```java
+@Component
+class OutlookService implements EmailService {
+}
+```
+
+Now:
+
+```java
+public StudentController(EmailService emailService) {
+    this.emailService = emailService;
+}
+```
+
+Spring sees:
+
+```text
+EmailService
+    │
+    ├── GmailService
+    └── OutlookService
+```
+
+There are multiple candidates.
+
+Spring needs to know which one should be injected.
+
+This is where `@Primary` or `@Qualifier` can be used.
+
+---
+
+# 18. `@Primary`
+
+Example:
+
+```java
+@Primary
+@Component
+public class GmailService implements EmailService {
+}
+```
+
+Now if Spring needs an `EmailService`, it can prefer the `GmailService` Bean.
+
+Conceptually:
+
+```text
+EmailService
+     │
+     ├── GmailService ← Primary
+     │
+     └── OutlookService
+```
+
+---
+
+# 19. `@Qualifier`
+
+Another option is to explicitly specify which Bean should be used.
+
+```java
+@Component("gmail")
+public class GmailService implements EmailService {
+}
+```
+
+```java
+@Component("outlook")
+public class OutlookService implements EmailService {
+}
+```
+
+Then:
+
+```java
+public StudentController(
+        @Qualifier("gmail") EmailService emailService) {
+
+    this.emailService = emailService;
+}
+```
+
+Now there is no ambiguity.
+
+---
+
+# 20. Where does the Spring Container come in?
+
+The **Spring IoC container** is responsible for managing Beans and their dependencies.
+
+A simplified picture:
+
+```text
+              Spring IoC Container
+                       │
+        ┌──────────────┼──────────────┐
+        ↓              ↓              ↓
+   Controller       Service       Repository
+        │              │              │
+        └──────────────┴──────────────┘
+                  Dependencies
+```
+
+In Spring, the container is commonly represented by an `ApplicationContext`.
+
+---
+
+# 21. ApplicationContext
+
+You may encounter:
+
+```java
+ApplicationContext context =
+        SpringApplication.run(Application.class, args);
+```
+
+The `ApplicationContext` represents the Spring application context and provides access to the Beans managed by Spring.
+
+For example, conceptually:
+
+```java
+StudentService service =
+        context.getBean(StudentService.class);
+```
+
+This asks the container for a `StudentService` Bean.
+
+Normally, in application code, I would rely on dependency injection rather than repeatedly calling `getBean()` manually.
+
+---
+
+# 22. The complete flow
+
+Suppose we have:
+
+```java
+@Service
+public class StudentService {
+}
+```
+
+and:
+
+```java
+@RestController
+public class StudentController {
+
+    private final StudentService studentService;
+
+    public StudentController(StudentService studentService) {
+        this.studentService = studentService;
+    }
+}
+```
+
+When the application starts, conceptually:
+
+```text
+Spring Boot starts
+       ↓
+ApplicationContext created
+       ↓
+Component scanning
+       ↓
+StudentService detected
+       ↓
+StudentService Bean created
+       ↓
+StudentController detected
+       ↓
+Spring sees StudentController needs StudentService
+       ↓
+Spring injects StudentService
+       ↓
+Controller is ready
+```
+
+This is the part that helped me understand what all those annotations are actually doing.
+
+---
+
+# 23. Why DI is useful
+
+Without DI:
+
+```text
+Controller
+    ↓
+creates Service
+    ↓
+Service creates Repository
+    ↓
+Repository creates database-related objects
+```
+
+Classes become responsible for creating too many things.
+
+With DI:
+
+```text
+             Spring
+               │
+       manages dependencies
+               │
+       ┌───────┼────────┐
+       ↓       ↓        ↓
+ Controller  Service  Repository
+```
+
+The classes mainly focus on their own responsibilities.
+
+---
+
+# 24. Dependency Injection also helps testing
+
+Suppose:
+
+```java
+public StudentController(StudentService studentService) {
+    this.studentService = studentService;
+}
+```
+
+For testing, I can provide a different implementation or a mock of `StudentService`.
+
+Conceptually:
+
+```text
+Production:
+Controller → Real StudentService
+
+Test:
+Controller → Mock StudentService
+```
+
+The controller doesn't have to know how the service was created.
+
+This is one of the practical benefits of dependency injection.
+
+---
+
+# 25. DI is not the same as `new`
+
+This is a useful distinction.
+
+Normal Java:
+
+```java
+StudentService service = new StudentService();
+```
+
+Here **my code** controls object creation.
+
+Spring DI:
+
+```java
+public StudentController(StudentService service) {
+    this.service = service;
+}
+```
+
+Here the object is provided by the Spring container.
+
+So:
+
+```text
+new
+↓
+I create the dependency
+
+
+Dependency Injection
+↓
+Dependency is provided to me
+```
+
+---
+
+# 26. My mental model
+
+When I see:
+
+```java
+@Service
+class StudentService {
+}
+```
+
+I think:
+
+```text
+"Spring, manage an instance of this class."
+```
+
+When I see:
+
+```java
+private final StudentService service;
+
+public StudentController(StudentService service) {
+    this.service = service;
+}
+```
+
+I think:
+
+```text
+"StudentController needs StudentService.
+Spring, provide it."
+```
+
+And when Spring starts:
+
+```text
+Application
+    ↓
+Spring Container
+    ↓
+creates/manages Beans
+    ↓
+connects dependencies
+    ↓
+Application is ready
+```
+
+---
+
+# Quick Revision
+
+```text
+IoC
+→ Control over object creation/management is given to the framework.
+
+Dependency
+→ An object/class that another class needs.
+
+Dependency Injection
+→ Providing that dependency instead of creating it inside the class.
+
+Bean
+→ Object managed by the Spring container.
+
+@Component
+→ General Spring-managed component.
+
+@Service
+→ Usually used for business/service logic.
+
+@Repository
+→ Usually used for persistence/database logic.
+
+@RestController
+→ REST web controller.
+
+Constructor Injection
+→ Dependency is provided through the constructor.
+
+@Autowired
+→ Tells Spring where dependency injection is needed;
+  with a single constructor, it is generally not required.
+
+@Primary
+→ Gives preference to one Bean when multiple candidates exist.
+
+@Qualifier
+→ Explicitly selects which Bean should be injected.
+
+ApplicationContext
+→ Spring's application context/container interface used to
+  manage and access Beans.
+```
+
+# The main thing I want to remember
+
+> **IoC is the idea. Dependency Injection is one way Spring implements that idea.**
+
+And instead of:
+
+```java
+new StudentService();
+```
+
+I should start thinking:
+
+```text
+"StudentController needs StudentService.
+Spring can provide it."
+```
+
+That is the basic idea behind **Dependency Injection in Spring Boot**.
