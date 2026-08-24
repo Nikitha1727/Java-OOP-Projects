@@ -1,0 +1,213 @@
+# Java: Overloading, Overriding & Constructors
+
+A simple guide to understanding **Constructors, Constructor Overloading, Method Overloading, and Method Overriding** in Java.
+
+---
+
+## 1. Constructors
+
+A **constructor** is a special block used to initialize an object.
+
+### Key Points
+
+* Constructor name must be the same as the class name.
+* It does not have a return type.
+* It is automatically called when an object is created.
+* Constructors can be overloaded.
+
+### Example
+
+```java
+class Student {
+
+    String name;
+    int age;
+
+    Student() {
+        name = "Unknown";
+        age = 0;
+    }
+
+    Student(String name, int age) {
+        this.name = name;
+        this.age = age;
+    }
+
+    void display() {
+        System.out.println(name + " " + age);
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+
+        Student s1 = new Student();
+        Student s2 = new Student("Nikitha", 18);
+
+        s1.display();
+        s2.display();
+    }
+}
+```
+
+---
+
+## 2. Constructor Overloading
+
+When a class has **multiple constructors with different parameter lists**, it is called constructor overloading.
+
+```java
+class Student {
+
+    Student() {
+        System.out.println("Default Constructor");
+    }
+
+    Student(String name) {
+        System.out.println("Name: " + name);
+    }
+
+    Student(String name, int age) {
+        System.out.println("Name: " + name + ", Age: " + age);
+    }
+}
+```
+
+Here, the same class has three constructors, but each accepts different parameters.
+
+---
+
+## 3. Method Overloading
+
+**Method overloading** means having multiple methods with the **same name but different parameters** in the same class.
+
+It is also called **compile-time polymorphism**.
+
+```java
+class Calculator {
+
+    int add(int a, int b) {
+        return a + b;
+    }
+
+    int add(int a, int b, int c) {
+        return a + b + c;
+    }
+
+    double add(double a, double b) {
+        return a + b;
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+
+        Calculator c = new Calculator();
+
+        System.out.println(c.add(10, 20));
+        System.out.println(c.add(10, 20, 30));
+        System.out.println(c.add(10.5, 20.5));
+    }
+}
+```
+
+### Remember
+
+Changing only the **return type** is NOT method overloading.
+
+```java
+int add(int a, int b)
+double add(int a, int b)   // ❌ Not valid overloading
+```
+
+---
+
+## 4. Method Overriding
+
+**Method overriding** happens when a child class provides its own implementation of a method already defined in the parent class.
+
+It is called **runtime polymorphism**.
+
+```java
+class Animal {
+
+    void sound() {
+        System.out.println("Animal makes a sound");
+    }
+}
+
+class Dog extends Animal {
+
+    @Override
+    void sound() {
+        System.out.println("Dog barks");
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+
+        Animal a = new Dog();
+
+        a.sound();
+    }
+}
+```
+
+### Output
+
+```text
+Dog barks
+```
+
+Even though the reference is of type `Animal`, the overridden method from `Dog` runs at runtime.
+
+---
+
+## Overloading vs Overriding
+
+| Feature               | Overloading                            | Overriding                        |
+| --------------------- | -------------------------------------- | --------------------------------- |
+| Meaning               | Same method name, different parameters | Child class changes parent method |
+| Where                 | Usually same class                     | Parent + child classes            |
+| Parameters            | Must be different                      | Usually same                      |
+| Polymorphism          | Compile-time                           | Runtime                           |
+| Inheritance required? | No                                     | Yes                               |
+
+---
+
+## Constructor Overloading vs Method Overloading
+
+Both follow the idea of **multiple definitions with different parameters**.
+
+```java
+// Constructor Overloading
+Student() { }
+
+Student(String name) { }
+```
+
+```java
+// Method Overloading
+void display() { }
+
+void display(String name) { }
+```
+
+The main difference is that **constructors initialize objects**, while **methods perform operations**.
+
+---
+
+## Quick Memory Trick
+
+```text
+Overloading  → Same name + Different parameters
+Overriding   → Parent method + Child implementation
+
+Constructor  → Initializes object
+Constructor Overloading → Multiple constructors with different parameters
+```
+
+### Why These Concepts Matter
+
+These concepts form an important part of **Java OOP and polymorphism**. Understanding them makes it easier to work with inheritance, abstraction, frameworks like Spring Boot, and larger Java applications.
