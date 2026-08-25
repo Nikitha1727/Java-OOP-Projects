@@ -1,0 +1,443 @@
+# Java Memory Model — Stack vs Heap
+
+Understanding **Stack and Heap memory** makes it much easier to understand what happens when a Java program creates variables and objects.
+
+When a Java program runs, the JVM manages memory for different purposes. Two important areas to understand are the **Stack** and the **Heap**.
+
+---
+
+## 1. Stack Memory
+
+The **Stack** is mainly used for storing information related to method execution.
+
+Whenever a method is called, a **stack frame** is created for that method. When the method finishes, its stack frame is removed.
+
+### Local Variables
+
+Variables declared inside a method or block are called **local variables**.
+
+```java
+public class Demo {
+
+    public static void main(String[] args) {
+
+        int age = 18;
+        String name = "Nikitha";
+
+        System.out.println(age);
+        System.out.println(name);
+    }
+}
+```
+
+Here:
+
+```text
+age
+name
+```
+
+are local variables because they are declared inside `main()`.
+
+### Important Points
+
+* Local variables belong to the method/block where they are declared.
+* Their scope is limited to that method/block.
+* Local variables need to be initialized before they are used.
+* They are associated with the method's stack frame.
+
+---
+
+## 2. Heap Memory
+
+The **Heap** is the memory area where objects are created.
+
+Whenever we use `new`, an object is created in the heap.
+
+```java
+Demo d = new Demo();
+```
+
+This statement has two important parts:
+
+```text
+Demo d = new Demo();
+     ↑       ↑
+ reference  object
+```
+
+The object created by:
+
+```java
+new Demo()
+```
+
+is stored in the **Heap**.
+
+The variable:
+
+```java
+d
+```
+
+holds the reference used to access that object.
+
+---
+
+## 3. Instance Variables
+
+Variables declared inside a class but outside methods are called **instance variables**.
+
+```java
+class Demo {
+
+    int a;
+    String name;
+
+    void display() {
+        System.out.println(a);
+        System.out.println(name);
+    }
+}
+```
+
+Here:
+
+```java
+int a;
+String name;
+```
+
+are instance variables.
+
+They belong to an **object**.
+
+When an object is created:
+
+```java
+Demo d = new Demo();
+```
+
+the object's instance variables are part of that object in the heap.
+
+Unlike local variables, instance variables receive **default values** if they are not explicitly initialized.
+
+For example:
+
+```java
+int a;        // 0
+boolean flag; // false
+String name;  // null
+```
+
+---
+
+# 4. Stack vs Heap
+
+Consider:
+
+```java
+class Demo {
+
+    int a = 10;
+
+    public static void main(String[] args) {
+
+        Demo d = new Demo();
+
+        int x = 20;
+    }
+}
+```
+
+A simplified view is:
+
+```text
+              JVM MEMORY
+
+        STACK                 HEAP
+   ┌──────────────┐      ┌──────────────┐
+   │ d ───────────┼─────►│ Demo object  │
+   │              │      │              │
+   │ x = 20       │      │ a = 10       │
+   └──────────────┘      └──────────────┘
+```
+
+The important idea is:
+
+```text
+d
+│
+└── reference ───────► Demo object
+                         │
+                         └── a = 10
+```
+
+So don't think of `d` as the object itself.
+
+`d` is the **reference used to access the object**.
+
+---
+
+# 5. Local Variable vs Instance Variable
+
+### Local Variable
+
+```java
+class Demo {
+
+    void show() {
+
+        int x = 10;
+    }
+}
+```
+
+`x` is a local variable.
+
+* Declared inside a method
+* Scope is limited to the method/block
+* Associated with the method's execution
+
+### Instance Variable
+
+```java
+class Demo {
+
+    int x = 10;
+}
+```
+
+`x` is an instance variable.
+
+* Declared inside the class
+* Outside methods
+* Belongs to an object
+* Gets a default value if not initialized
+
+---
+
+# 6. Multiple Objects
+
+This becomes clearer when multiple objects are created.
+
+```java
+class Student {
+
+    String name;
+
+    Student(String name) {
+        this.name = name;
+    }
+}
+
+public class Main {
+
+    public static void main(String[] args) {
+
+        Student s1 = new Student("A");
+        Student s2 = new Student("B");
+
+        System.out.println(s1.name);
+        System.out.println(s2.name);
+    }
+}
+```
+
+Conceptually:
+
+```text
+STACK                         HEAP
+
+s1 ───────────────────────► Student
+                              name = "A"
+
+s2 ───────────────────────► Student
+                              name = "B"
+```
+
+Each `new Student()` creates a **separate object**.
+
+Therefore, `s1` and `s2` refer to different objects.
+
+---
+
+# 7. What Happens When a Method Is Called?
+
+Consider:
+
+```java
+public class Demo {
+
+    static void calculate() {
+
+        int x = 10;
+        int y = 20;
+
+        int result = x + y;
+
+        System.out.println(result);
+    }
+
+    public static void main(String[] args) {
+
+        calculate();
+    }
+}
+```
+
+When `main()` calls:
+
+```java
+calculate();
+```
+
+a new stack frame is created for `calculate()`.
+
+Conceptually:
+
+```text
+STACK
+
+┌──────────────────┐
+│ calculate()      │
+│ x = 10           │
+│ y = 20           │
+│ result = 30      │
+├──────────────────┤
+│ main()            │
+└──────────────────┘
+```
+
+When `calculate()` finishes, its stack frame is removed.
+
+This is why stack memory is closely connected with **method execution**.
+
+---
+
+# 8. What About Objects After They Are No Longer Used?
+
+Objects are created in the heap.
+
+Java has a **Garbage Collector (GC)** that identifies objects that are no longer reachable and can reclaim their memory.
+
+For example:
+
+```java
+Student s = new Student("A");
+
+s = null;
+```
+
+After:
+
+```java
+s = null;
+```
+
+the previously created `Student` object no longer has a reference from `s`.
+
+If there are no other references to that object, it can become **eligible for garbage collection**.
+
+> Eligible for garbage collection does not mean the object is immediately deleted.
+
+The JVM decides when garbage collection occurs.
+
+---
+
+# 9. Common Misunderstanding
+
+A common simplified explanation is:
+
+> "Primitive variables are always stored in the stack and objects are always stored in the heap."
+
+This is useful for learning the basic model, but it is **not the complete JVM specification**.
+
+For learning Java fundamentals, remember the more useful distinction:
+
+```text
+Local variables
+        ↓
+Method execution / stack
+
+Objects
+        ↓
+Heap
+
+Instance variables
+        ↓
+Part of their objects
+        ↓
+Heap
+```
+
+Also remember that a **reference variable is not the object itself**.
+
+---
+
+# 10. Quick Comparison
+
+| Stack                                            | Heap                                 |
+| ------------------------------------------------ | ------------------------------------ |
+| Associated with method execution                 | Stores objects                       |
+| Contains stack frames                            | Shared JVM memory area               |
+| Local variables are associated with stack frames | Objects and their instance data      |
+| Method frames are removed when methods finish    | Objects can remain until unreachable |
+| Limited lifetime for method-local data           | Managed by Garbage Collector         |
+
+---
+
+# 11. The One Example to Remember
+
+```java
+class Demo {
+
+    int a = 10;
+
+    public static void main(String[] args) {
+
+        Demo d = new Demo();
+
+        int x = 20;
+    }
+}
+```
+
+Think:
+
+```text
+STACK                         HEAP
+
+d ────────────────────────►  Demo object
+                              a = 10
+
+x = 20
+```
+
+### In one line:
+
+**Stack → method execution and local variables**
+
+**Heap → objects and their instance data**
+
+And:
+
+**Reference → points to/accesses an object; it is not the object itself.**
+
+---
+
+## Why This Concept Matters
+
+Understanding Stack and Heap helps you understand:
+
+* Object creation
+* References
+* Local vs instance variables
+* Method execution
+* Garbage Collection
+* `null`
+* `new`
+* Memory-related errors
+* How Java manages objects
+
+This is one of those Java fundamentals that becomes much more useful once you understand **what is actually happening when `new` is used**.
