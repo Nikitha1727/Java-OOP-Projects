@@ -1,0 +1,320 @@
+# Java — `final` vs `finally` vs `finalize()`
+
+`final`, `finally`, and `finalize()` look similar, but they are **three completely different concepts** in Java.
+
+Understanding the difference is important for both Java development and interviews.
+
+---
+
+## 1. `final`
+
+`final` is a **keyword** used to restrict changes.
+
+It can be used with:
+
+* Variables
+* Methods
+* Classes
+
+### Final Variable
+
+Once a `final` variable is assigned a value, it cannot be reassigned.
+
+```java
+public class Demo {
+
+    public static void main(String[] args) {
+
+        final int MAX = 100;
+
+        System.out.println(MAX);
+
+        // MAX = 200;   // ❌ Compilation error
+    }
+}
+```
+
+Think of it as:
+
+```text
+final variable
+      ↓
+cannot be reassigned
+```
+
+### Final Reference
+
+A common confusion is that `final` does **not necessarily make an object immutable**.
+
+```java
+final StringBuilder sb = new StringBuilder("Java");
+
+sb.append(" Programming");
+
+System.out.println(sb);
+```
+
+Output:
+
+```text
+Java Programming
+```
+
+This works because the reference `sb` cannot point to another object, but the object itself can still be modified.
+
+```java
+final StringBuilder sb = new StringBuilder("Java");
+
+// sb = new StringBuilder("Python");  ❌
+```
+
+So:
+
+> **Final reference ≠ immutable object**
+
+---
+
+## 2. `final` Method
+
+A `final` method cannot be overridden by a child class.
+
+```java
+class Parent {
+
+    final void show() {
+        System.out.println("Parent");
+    }
+}
+
+class Child extends Parent {
+
+    // void show() { }  ❌ Cannot override final method
+}
+```
+
+This is useful when a class wants to ensure that a particular method's implementation cannot be changed through overriding.
+
+---
+
+## 3. `final` Class
+
+A `final` class cannot be inherited.
+
+```java
+final class Vehicle {
+
+    void start() {
+        System.out.println("Vehicle started");
+    }
+}
+```
+
+Trying to extend it:
+
+```java
+class Car extends Vehicle {   // ❌ Compilation error
+}
+```
+
+A well-known example is:
+
+```java
+final class String
+```
+
+`String` cannot be extended.
+
+---
+
+# 4. `finally`
+
+`finally` is a **block used with exception handling**.
+
+The code inside `finally` is generally executed after the `try`/`catch` processing, whether an exception occurs or not.
+
+```java
+public class Demo {
+
+    public static void main(String[] args) {
+
+        try {
+            int result = 10 / 2;
+            System.out.println(result);
+        }
+        catch (Exception e) {
+            System.out.println("Exception occurred");
+        }
+        finally {
+            System.out.println("Finally block executed");
+        }
+    }
+}
+```
+
+Output:
+
+```text
+5
+Finally block executed
+```
+
+### Why use `finally`?
+
+It is commonly used for **cleanup operations**, such as closing resources.
+
+Conceptually:
+
+```text
+try
+ ↓
+perform operation
+ ↓
+catch → handle exception
+ ↓
+finally → cleanup
+```
+
+---
+
+# 5. What If an Exception Occurs?
+
+```java
+try {
+    int result = 10 / 0;
+}
+catch (ArithmeticException e) {
+    System.out.println("Cannot divide by zero");
+}
+finally {
+    System.out.println("Cleanup");
+}
+```
+
+Output:
+
+```text
+Cannot divide by zero
+Cleanup
+```
+
+The `finally` block still executes after the exception is handled.
+
+---
+
+# 6. `finalize()`
+
+`finalize()` was a method associated with **garbage collection**.
+
+Historically, Java allowed a class to define:
+
+```java
+protected void finalize() {
+    // cleanup
+}
+```
+
+The idea was that the JVM's garbage collector might invoke `finalize()` before reclaiming an object's memory.
+
+### But there is an important catch:
+
+**`finalize()` is deprecated and should not be used in modern Java.**
+
+You should not depend on it for cleanup because:
+
+* It is unpredictable when or whether it will run.
+* It can negatively affect performance.
+* It can delay garbage collection.
+* It is not a reliable resource-management mechanism.
+
+Modern Java uses better approaches such as **try-with-resources** for resources that need explicit closing.
+
+---
+
+# 7. Modern Alternative — Try-With-Resources
+
+Instead of relying on `finalize()` for resource cleanup:
+
+```java
+try (FileInputStream file = new FileInputStream("data.txt")) {
+
+    // use file
+
+}
+catch (Exception e) {
+    e.printStackTrace();
+}
+```
+
+The resource is automatically closed when the `try` block finishes.
+
+This is much safer and more predictable.
+
+---
+
+# 8. The Difference
+
+| `final`                                      | `finally`                  | `finalize()`               |
+| -------------------------------------------- | -------------------------- | -------------------------- |
+| Keyword                                      | Block                      | Method                     |
+| Used to restrict changes                     | Used in exception handling | Historically related to GC |
+| Variable, method, class                      | `try`/`catch`              | Object cleanup             |
+| Prevents reassignment/overriding/inheritance | Used for cleanup logic     | Deprecated                 |
+| Compile-time concept                         | Exception handling         | Garbage collection         |
+
+---
+
+# 9. Easy Way to Remember
+
+```text
+final
+  ↓
+STOP CHANGE
+
+finally
+  ↓
+RUN CLEANUP AFTER try/catch
+
+finalize()
+  ↓
+OLD GC-RELATED MECHANISM
+DO NOT USE IN MODERN JAVA
+```
+
+### One important distinction
+
+```java
+final int x = 10;
+```
+
+`final` → **cannot change `x`**
+
+```java
+try {
+    // code
+}
+finally {
+    // cleanup
+}
+```
+
+`finally` → **exception-handling block**
+
+```java
+protected void finalize() {
+    // old mechanism
+}
+```
+
+`finalize()` → **deprecated; don't use it for cleanup**
+
+---
+
+## Key Takeaway
+
+Although the names are similar:
+
+> **`final` controls modification, `finally` handles cleanup in exception-handling flow, and `finalize()` was an old garbage-collection-related mechanism that is now deprecated.**
+
+For modern Java development, remember:
+
+**Use `final` when you need restrictions, `finally` when appropriate for exception-handling cleanup, and avoid `finalize()` in new code.**
