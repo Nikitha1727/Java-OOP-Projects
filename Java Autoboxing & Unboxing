@@ -1,0 +1,468 @@
+# Java Autoboxing & Unboxing
+
+Java has two different worlds:
+
+* **Primitive types** → `int`, `double`, `char`, `boolean`, etc.
+* **Wrapper classes** → `Integer`, `Double`, `Character`, `Boolean`, etc.
+
+Java allows automatic conversion between them through **Autoboxing** and **Unboxing**.
+
+---
+
+## 1. What is Autoboxing?
+
+**Autoboxing** is the automatic conversion of a primitive value into its corresponding wrapper object.
+
+```java
+int a = 10;
+
+Integer b = a;
+```
+
+Java automatically converts:
+
+```text
+int → Integer
+```
+
+This is called **Autoboxing**.
+
+It is equivalent to:
+
+```java
+Integer b = Integer.valueOf(a);
+```
+
+---
+
+## 2. What is Unboxing?
+
+**Unboxing** is the automatic conversion of a wrapper object back into its primitive value.
+
+```java
+Integer a = 10;
+
+int b = a;
+```
+
+Java automatically converts:
+
+```text
+Integer → int
+```
+
+This is called **Unboxing**.
+
+Conceptually:
+
+```java
+int b = a.intValue();
+```
+
+---
+
+# 3. Autoboxing + Unboxing Together
+
+Both operations can happen automatically in the same expression.
+
+```java
+Integer a = 10;
+
+int b = a;
+```
+
+The process is:
+
+```text
+10
+ ↓
+int
+ ↓ autoboxing
+Integer
+ ↓ unboxing
+int
+```
+
+Your notes specifically identify that **autoboxing followed by unboxing can work together**.
+
+---
+
+# 4. Why Do We Need Wrapper Classes?
+
+Collections such as `ArrayList` work with objects rather than primitive types.
+
+You cannot write:
+
+```java
+ArrayList<int> list;   // ❌
+```
+
+Instead:
+
+```java
+ArrayList<Integer> list = new ArrayList<>();
+```
+
+Now Java automatically performs autoboxing:
+
+```java
+list.add(10);
+```
+
+Conceptually:
+
+```java
+list.add(Integer.valueOf(10));
+```
+
+And when retrieving:
+
+```java
+int x = list.get(0);
+```
+
+Java performs unboxing.
+
+```text
+Primitive
+   ↓
+Autoboxing
+   ↓
+Wrapper Object
+   ↓
+Unboxing
+   ↓
+Primitive
+```
+
+---
+
+# 5. Autoboxing in Method Calls
+
+Consider:
+
+```java
+class Demo {
+
+    static void display(Integer x) {
+        System.out.println("Integer");
+    }
+
+    public static void main(String[] args) {
+
+        int a = 10;
+
+        display(a);
+    }
+}
+```
+
+Here:
+
+```java
+int a = 10;
+```
+
+is passed to:
+
+```java
+display(Integer x)
+```
+
+Java automatically performs:
+
+```text
+int → Integer
+```
+
+So the method can accept the primitive value.
+
+---
+
+# 6. Unboxing During Method Overloading
+
+This is where things become interesting.
+
+```java
+class Demo {
+
+    void display(int x) {
+        System.out.println("int");
+    }
+
+    void display(Integer x) {
+        System.out.println("Integer");
+    }
+
+    public static void main(String[] args) {
+
+        Demo d = new Demo();
+
+        Integer a = 10;
+
+        d.display(a);
+    }
+}
+```
+
+Output:
+
+```text
+Integer
+```
+
+Why?
+
+Because `a` is already an `Integer`.
+
+Java chooses the method that matches the argument **without requiring conversion**.
+
+---
+
+# 7. Widening vs Unboxing
+
+Consider:
+
+```java
+class Demo {
+
+    void display(long x) {
+        System.out.println("long");
+    }
+
+    void display(Integer x) {
+        System.out.println("Integer");
+    }
+
+    public static void main(String[] args) {
+
+        Integer a = 10;
+
+        Demo d = new Demo();
+
+        d.display(a);
+    }
+}
+```
+
+Output:
+
+```text
+Integer
+```
+
+Java prefers the direct match rather than unboxing `Integer → int` and then widening `int → long`.
+
+---
+
+# 8. The Dangerous Part — `null`
+
+Wrapper objects can contain `null`.
+
+```java
+Integer x = null;
+```
+
+But a primitive cannot:
+
+```java
+int x = null;   // ❌
+```
+
+Now look at this:
+
+```java
+Integer x = null;
+
+int y = x;
+```
+
+This compiles, but at runtime:
+
+```text
+NullPointerException
+```
+
+Why?
+
+Because Java tries to perform:
+
+```text
+Integer → int
+```
+
+But there is no actual integer value inside `x`.
+
+Conceptually:
+
+```java
+x.intValue();
+```
+
+Calling a method on `null` causes the exception.
+
+---
+
+# 9. A Common Interview Trap
+
+```java
+Integer a = 100;
+
+if (a == 100) {
+    System.out.println("Yes");
+}
+```
+
+This works because Java can unbox `a`:
+
+```text
+Integer → int
+```
+
+So the comparison becomes conceptually:
+
+```java
+a.intValue() == 100
+```
+
+But comparing two wrapper objects can behave differently because `==` deals with references when both operands are objects.
+
+For example:
+
+```java
+Integer a = 100;
+Integer b = 100;
+
+System.out.println(a == b);
+```
+
+This can print:
+
+```text
+true
+```
+
+because of Integer caching.
+
+But:
+
+```java
+Integer a = 1000;
+Integer b = 1000;
+
+System.out.println(a == b);
+```
+
+can print:
+
+```text
+false
+```
+
+Therefore:
+
+> Don't use `==` to check whether two wrapper objects have the same value. Use `.equals()` when you mean value equality.
+
+---
+
+# 10. Primitive vs Wrapper
+
+| Primitive | Wrapper     |
+| --------- | ----------- |
+| `int`     | `Integer`   |
+| `long`    | `Long`      |
+| `float`   | `Float`     |
+| `double`  | `Double`    |
+| `char`    | `Character` |
+| `byte`    | `Byte`      |
+| `short`   | `Short`     |
+| `boolean` | `Boolean`   |
+
+---
+
+# 11. Complete Example
+
+```java
+import java.util.ArrayList;
+
+public class Main {
+
+    public static void main(String[] args) {
+
+        // Autoboxing
+        int a = 10;
+        Integer b = a;
+
+        // Unboxing
+        int c = b;
+
+        // Collection + Autoboxing
+        ArrayList<Integer> numbers = new ArrayList<>();
+
+        numbers.add(20);
+        numbers.add(30);
+
+        // Collection + Unboxing
+        int value = numbers.get(0);
+
+        System.out.println(a);
+        System.out.println(b);
+        System.out.println(c);
+        System.out.println(value);
+    }
+}
+```
+
+Output:
+
+```text
+10
+10
+10
+20
+```
+
+---
+
+# 12. Key Rules to Remember
+
+```text
+Primitive → Wrapper
+        ↓
+   Autoboxing
+
+Wrapper → Primitive
+        ↓
+    Unboxing
+```
+
+### Remember these:
+
+**Rule 1:** Autoboxing and unboxing can happen automatically.
+
+**Rule 2:** Collections use wrapper classes, not primitives.
+
+**Rule 3:** Wrapper objects can contain `null`; primitives cannot.
+
+**Rule 4:** Unboxing `null` causes `NullPointerException`.
+
+**Rule 5:** Method overloading can become tricky when widening and boxing/unboxing are both possible.
+
+**Rule 6:** Don't rely on `==` for comparing wrapper object values.
+
+---
+
+## Final Takeaway
+
+Autoboxing and unboxing make Java code easier to write by automatically converting between primitives and wrapper objects.
+
+But these conversions are not just syntax shortcuts. They affect:
+
+* Method overloading
+* Collections
+* `null`
+* Runtime exceptions
+* Object comparison
+* Performance
+
+So understanding **when Java automatically boxes or unboxes a value** is important for writing predictable Java code.
