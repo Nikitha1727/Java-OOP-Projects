@@ -1,0 +1,366 @@
+# Java Comparable vs Comparator
+
+This repository explains the difference between **Comparable** and **Comparator** in Java and how they are used to sort custom objects.
+
+---
+
+## 📌 The Problem
+
+Java can easily sort primitive values and strings.
+
+```java
+List<Integer> numbers = Arrays.asList(30, 10, 20);
+
+Collections.sort(numbers);
+
+System.out.println(numbers);
+```
+
+Output:
+
+```text
+[10, 20, 30]
+```
+
+But what happens when we want to sort our own objects?
+
+For example:
+
+```java
+Student s1 = new Student("Rahul", 85);
+Student s2 = new Student("Ananya", 72);
+Student s3 = new Student("Zoya", 95);
+```
+
+How does Java know which student should come first?
+
+This is where **Comparable** and **Comparator** are used.
+
+---
+
+# 1️⃣ Comparable
+
+`Comparable` is used to define the **natural ordering** of objects.
+
+A class implements:
+
+```java
+Comparable<T>
+```
+
+and overrides:
+
+```java
+compareTo()
+```
+
+### Example: Sorting Students by Marks
+
+```java
+import java.util.*;
+
+class Student implements Comparable<Student> {
+
+    String name;
+    int marks;
+
+    Student(String name, int marks) {
+        this.name = name;
+        this.marks = marks;
+    }
+
+    @Override
+    public int compareTo(Student other) {
+        return Integer.compare(this.marks, other.marks);
+    }
+
+    @Override
+    public String toString() {
+        return name + " - " + marks;
+    }
+}
+
+public class Main {
+
+    public static void main(String[] args) {
+
+        ArrayList<Student> students = new ArrayList<>();
+
+        students.add(new Student("Rahul", 85));
+        students.add(new Student("Ananya", 72));
+        students.add(new Student("Zoya", 95));
+
+        Collections.sort(students);
+
+        System.out.println(students);
+    }
+}
+```
+
+### Output
+
+```text
+[Ananya - 72, Rahul - 85, Zoya - 95]
+```
+
+Here, the `Student` class defines its own default sorting order based on marks.
+
+---
+
+## 🔍 How `compareTo()` Works
+
+`compareTo()` returns an integer.
+
+```text
+Negative value → Current object comes before the other object
+
+Zero → Both objects are equal in ordering
+
+Positive value → Current object comes after the other object
+```
+
+Example:
+
+```java
+return Integer.compare(this.marks, other.marks);
+```
+
+---
+
+# 2️⃣ Comparator
+
+`Comparator` is used when we want **custom sorting**.
+
+For example, the same students can be sorted by:
+
+* Name
+* Marks
+* Age
+* ID
+
+Unlike `Comparable`, we don't need to define the sorting logic permanently inside the class.
+
+---
+
+## Example: Sorting Students by Name
+
+```java
+import java.util.*;
+
+class Student {
+
+    String name;
+    int marks;
+
+    Student(String name, int marks) {
+        this.name = name;
+        this.marks = marks;
+    }
+
+    @Override
+    public String toString() {
+        return name + " - " + marks;
+    }
+}
+
+public class Main {
+
+    public static void main(String[] args) {
+
+        ArrayList<Student> students = new ArrayList<>();
+
+        students.add(new Student("Rahul", 85));
+        students.add(new Student("Ananya", 72));
+        students.add(new Student("Zoya", 95));
+
+        Comparator<Student> byName =
+                (s1, s2) -> s1.name.compareTo(s2.name);
+
+        students.sort(byName);
+
+        System.out.println(students);
+    }
+}
+```
+
+### Output
+
+```text
+[Ananya - 72, Rahul - 85, Zoya - 95]
+```
+
+---
+
+# 3️⃣ Multiple Ways to Sort
+
+This is where `Comparator` becomes powerful.
+
+### Sort by Name
+
+```java
+Comparator<Student> byName =
+        Comparator.comparing(s -> s.name);
+```
+
+### Sort by Marks
+
+```java
+Comparator<Student> byMarks =
+        Comparator.comparingInt(s -> s.marks);
+```
+
+Now we can choose how to sort:
+
+```java
+students.sort(byName);
+```
+
+or:
+
+```java
+students.sort(byMarks);
+```
+
+---
+
+# ⬇️ Descending Order
+
+We can reverse the sorting order using:
+
+```java
+students.sort(byMarks.reversed());
+```
+
+For example:
+
+```text
+Ascending Order:
+72 → 85 → 95
+
+Descending Order:
+95 → 85 → 72
+```
+
+---
+
+# 🔗 Sorting by Multiple Fields
+
+Suppose two students have the same marks.
+
+We can first sort by marks and then by name.
+
+```java
+Comparator<Student> studentComparator =
+        Comparator
+                .comparingInt((Student s) -> s.marks)
+                .thenComparing(s -> s.name);
+```
+
+Java will:
+
+```text
+Step 1 → Compare marks
+
+Step 2 → If marks are equal, compare names
+```
+
+---
+
+# ⚖️ Comparable vs Comparator
+
+| Comparable                            | Comparator                           |
+| ------------------------------------- | ------------------------------------ |
+| Defines natural ordering              | Defines custom ordering              |
+| Uses `compareTo()`                    | Uses `compare()`                     |
+| Implemented inside the class          | Usually created outside the class    |
+| Usually provides one default ordering | Can provide multiple sorting methods |
+| Uses `Comparable<T>`                  | Uses `Comparator<T>`                 |
+
+---
+
+# 🧠 Easy Way to Remember
+
+```text
+Comparable
+↓
+"What is the default way to sort my objects?"
+
+Comparator
+↓
+"How do I want to sort these objects right now?"
+```
+
+---
+
+# 🌍 Real-World Example
+
+Imagine an e-commerce application with products.
+
+Each product has:
+
+```text
+Name
+Price
+Rating
+```
+
+Users may want to sort products differently:
+
+```text
+💰 Price: Low → High
+
+⭐ Rating: High → Low
+
+🔤 Name: A → Z
+```
+
+Using `Comparator`, we can create different sorting strategies.
+
+```java
+Comparator<Product> byPrice =
+        Comparator.comparingDouble(p -> p.price);
+
+Comparator<Product> byRating =
+        Comparator.comparingDouble(p -> p.rating)
+                  .reversed();
+
+Comparator<Product> byName =
+        Comparator.comparing(p -> p.name);
+```
+
+This allows the same objects to be sorted in multiple ways.
+
+---
+
+# 💡 Key Takeaway
+
+```text
+Comparable
+→ Natural/default ordering
+→ compareTo()
+→ Usually one sorting strategy
+
+Comparator
+→ Custom ordering
+→ compare()
+→ Multiple sorting strategies
+```
+
+Both are important when working with:
+
+* `Collections.sort()`
+* `List.sort()`
+* `TreeSet`
+* `TreeMap`
+* Custom Objects
+* Real-world sorting requirements
+
+---
+
+### ⭐ Conclusion
+
+Use **Comparable** when your class has a natural default order.
+
+Use **Comparator** when you need different ways to sort the same objects.
+
+Understanding both concepts is important for working with **Java Collections and custom objects**.
