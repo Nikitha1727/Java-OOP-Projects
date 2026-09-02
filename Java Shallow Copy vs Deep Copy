@@ -1,0 +1,479 @@
+# Java Shallow Copy vs Deep Copy
+
+When working with objects in Java, copying an object can be confusing.
+
+Consider this question:
+
+> If we copy an object and later modify the copy, will the original object also change?
+
+The answer depends on **how the object was copied**.
+
+This README explains:
+
+* Reference Copy
+* Shallow Copy
+* Deep Copy
+* The difference between them
+* Real examples using nested objects
+
+---
+
+# 1. Reference Copy
+
+Let's start with the simplest type of copying.
+
+```java
+Student s1 = new Student("Nikitha");
+
+Student s2 = s1;
+```
+
+This does **not create a new object**.
+
+Both `s1` and `s2` refer to the same object.
+
+```text
+s1 ────────┐
+           ▼
+       Student Object
+           ▲
+s2 ────────┘
+```
+
+Example:
+
+```java
+class Student {
+
+    String name;
+
+    Student(String name) {
+        this.name = name;
+    }
+}
+
+public class Main {
+
+    public static void main(String[] args) {
+
+        Student s1 = new Student("Nikitha");
+
+        Student s2 = s1;
+
+        s2.name = "Rahul";
+
+        System.out.println(s1.name);
+    }
+}
+```
+
+### Output
+
+```text
+Rahul
+```
+
+Why?
+
+Because `s1` and `s2` point to the **same object**.
+
+---
+
+# 2. What is a Shallow Copy?
+
+A **shallow copy** creates a new outer object.
+
+However, if the object contains references to other objects, those references are copied.
+
+This means the original object and copied object can still share nested objects.
+
+Consider:
+
+```java
+class Address {
+
+    String city;
+
+    Address(String city) {
+        this.city = city;
+    }
+}
+
+class Student {
+
+    String name;
+    Address address;
+
+    Student(String name, Address address) {
+        this.name = name;
+        this.address = address;
+    }
+}
+```
+
+A `Student` contains:
+
+```text
+Student
+   │
+   ├── name
+   │
+   └── Address
+```
+
+---
+
+# 3. Shallow Copy Example
+
+```java
+class Address {
+
+    String city;
+
+    Address(String city) {
+        this.city = city;
+    }
+}
+
+class Student {
+
+    String name;
+    Address address;
+
+    Student(String name, Address address) {
+        this.name = name;
+        this.address = address;
+    }
+
+    Student(Student other) {
+
+        this.name = other.name;
+
+        // Same Address object is shared
+        this.address = other.address;
+    }
+}
+
+public class Main {
+
+    public static void main(String[] args) {
+
+        Address address =
+                new Address("Bengaluru");
+
+        Student s1 =
+                new Student("Nikitha", address);
+
+        Student s2 =
+                new Student(s1);
+
+        s2.address.city = "Mysuru";
+
+        System.out.println(s1.address.city);
+    }
+}
+```
+
+### Output
+
+```text
+Mysuru
+```
+
+Even though we created a new `Student` object, both students still refer to the same `Address`.
+
+---
+
+## Visual Representation
+
+```text
+Original Student (s1)
+        │
+        ▼
+   Address Object
+   city = Bengaluru
+        ▲
+        │
+Copied Student (s2)
+```
+
+After:
+
+```java
+s2.address.city = "Mysuru";
+```
+
+The shared object changes.
+
+Therefore:
+
+```text
+s1.address.city → Mysuru
+s2.address.city → Mysuru
+```
+
+This is a **Shallow Copy**.
+
+---
+
+# 4. What is a Deep Copy?
+
+A **deep copy** creates completely independent objects.
+
+Not only is the outer object copied, but its nested objects are also copied.
+
+```text
+Original Student
+       │
+       ▼
+   Address Object
+       │
+       ▼
+   Bengaluru
+
+
+Copied Student
+       │
+       ▼
+   New Address Object
+       │
+       ▼
+   Bengaluru
+```
+
+Now the two students do not share the same `Address`.
+
+---
+
+# 5. Deep Copy Example
+
+```java
+class Address {
+
+    String city;
+
+    Address(String city) {
+        this.city = city;
+    }
+
+    Address(Address other) {
+        this.city = other.city;
+    }
+}
+
+class Student {
+
+    String name;
+    Address address;
+
+    Student(String name, Address address) {
+        this.name = name;
+        this.address = address;
+    }
+
+    Student(Student other) {
+
+        this.name = other.name;
+
+        // Create a NEW Address object
+        this.address =
+                new Address(other.address);
+    }
+}
+
+public class Main {
+
+    public static void main(String[] args) {
+
+        Address address =
+                new Address("Bengaluru");
+
+        Student s1 =
+                new Student("Nikitha", address);
+
+        Student s2 =
+                new Student(s1);
+
+        s2.address.city = "Mysuru";
+
+        System.out.println(s1.address.city);
+        System.out.println(s2.address.city);
+    }
+}
+```
+
+### Output
+
+```text
+Bengaluru
+Mysuru
+```
+
+Now the objects are completely independent.
+
+---
+
+# 6. Visual Comparison
+
+## Shallow Copy
+
+```text
+s1                    s2
+ │                     │
+ ▼                     ▼
+Student              Student
+   │                    │
+   └───────┐    ┌────────┘
+           ▼
+        Address
+```
+
+Both objects share the same nested `Address`.
+
+---
+
+## Deep Copy
+
+```text
+s1                    s2
+ │                     │
+ ▼                     ▼
+Student              Student
+ │                     │
+ ▼                     ▼
+Address              Address
+```
+
+Each object has its own independent nested object.
+
+---
+
+# 7. Shallow Copy vs Deep Copy
+
+| Shallow Copy                    | Deep Copy                              |
+| ------------------------------- | -------------------------------------- |
+| Creates a new outer object      | Creates completely independent objects |
+| Nested references may be shared | Nested objects are also copied         |
+| Changes can affect both objects | Changes remain independent             |
+| Faster and uses less memory     | Can use more memory                    |
+| Simple to create                | More complex                           |
+
+---
+
+# 8. Where Does `clone()` Come In?
+
+Java provides a `clone()` mechanism through the `Cloneable` interface.
+
+Example:
+
+```java
+class Student implements Cloneable {
+
+    String name;
+
+    @Override
+    protected Object clone()
+            throws CloneNotSupportedException {
+
+        return super.clone();
+    }
+}
+```
+
+`super.clone()` typically performs a **shallow copy**.
+
+This means reference fields inside the object can still point to the same nested objects.
+
+For a deep copy, you must explicitly copy nested mutable objects as well.
+
+---
+
+# 9. A Common Real-World Example
+
+Imagine a user profile:
+
+```text
+User
+ │
+ ├── Name
+ │
+ ├── Email
+ │
+ └── Address
+```
+
+If you create a copy of the user:
+
+```text
+Original User
+        ↓
+     Address
+
+Copied User
+        ↓
+     Address
+```
+
+If both users share the same address object and one copy changes the city, the other copy may also see that change.
+
+This can create unexpected bugs.
+
+A deep copy avoids this problem by creating separate nested objects.
+
+---
+
+# 🧠 Easy Way to Remember
+
+```text
+Reference Copy
+→ Same object
+
+Shallow Copy
+→ New outer object
+→ Shared nested objects
+
+Deep Copy
+→ New outer object
+→ New nested objects
+```
+
+---
+
+# 🔑 Final Takeaway
+
+The main difference is not simply whether a **new object** is created.
+
+The important question is:
+
+> **Are the nested objects also copied?**
+
+### Shallow Copy
+
+```text
+New Outer Object
++
+Shared Nested Objects
+```
+
+### Deep Copy
+
+```text
+New Outer Object
++
+New Nested Objects
+```
+
+Understanding this concept helps you avoid unexpected changes when working with:
+
+* Nested objects
+* Object references
+* Collections
+* Cloning
+* Data transfer objects
+* Real-world Java applications
+
+---
+
+⭐ **Key Rule:**
+
+> If two objects share a mutable nested object, changing that nested object can affect both. Deep copying prevents this by creating independent nested objects.
