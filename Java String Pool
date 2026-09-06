@@ -1,0 +1,571 @@
+# Java String Pool — Why `==` Sometimes Works
+
+In Java, Strings behave differently from many other objects.
+
+Consider this:
+
+```java
+String a = "Java";
+String b = "Java";
+
+System.out.println(a == b);
+```
+
+Output:
+
+```text
+true
+```
+
+But now:
+
+```java
+String a = new String("Java");
+String b = new String("Java");
+
+System.out.println(a == b);
+```
+
+Output:
+
+```text
+false
+```
+
+Why does this happen?
+
+The answer is the **Java String Pool**.
+
+---
+
+# 1. What is the String Pool?
+
+The **String Pool** is a mechanism used by Java to reuse String objects.
+
+Strings are used very frequently in Java applications.
+
+Instead of creating multiple identical String objects unnecessarily, Java can reuse an existing String.
+
+For example:
+
+```java
+String a = "Hello";
+String b = "Hello";
+```
+
+Conceptually:
+
+```text
+a ──────┐
+        ▼
+     "Hello"
+        ▲
+        │
+b ──────┘
+```
+
+Both variables refer to the same pooled String object.
+
+Therefore:
+
+```java
+a == b
+```
+
+returns:
+
+```text
+true
+```
+
+because `==` compares the references.
+
+---
+
+# 2. What Does `==` Actually Compare?
+
+For primitive values:
+
+```java
+int a = 10;
+int b = 10;
+
+System.out.println(a == b);
+```
+
+`==` compares values.
+
+For objects:
+
+```java
+Object a;
+Object b;
+```
+
+`==` compares whether both references point to the **same object**.
+
+Example:
+
+```java
+String a = new String("Java");
+String b = new String("Java");
+
+System.out.println(a == b);
+```
+
+Even though both Strings contain the same characters:
+
+```text
+Java
+```
+
+they are different objects.
+
+So:
+
+```text
+false
+```
+
+---
+
+# 3. String Literals vs `new String()`
+
+### String Literal
+
+```java
+String a = "Java";
+String b = "Java";
+```
+
+Java can reuse the pooled String.
+
+```text
+a ──────┐
+        ▼
+      "Java"
+        ▲
+        │
+b ──────┘
+```
+
+Therefore:
+
+```java
+a == b
+```
+
+is:
+
+```text
+true
+```
+
+---
+
+### Using `new`
+
+```java
+String a = new String("Java");
+String b = new String("Java");
+```
+
+Each `new String()` explicitly creates a separate String object.
+
+Conceptually:
+
+```text
+a ───────► "Java"
+
+b ───────► "Java"
+```
+
+The contents are equal, but the objects are different.
+
+Therefore:
+
+```java
+a == b
+```
+
+returns:
+
+```text
+false
+```
+
+---
+
+# 4. `.equals()` vs `==`
+
+Let's compare:
+
+```java
+String a = new String("Java");
+String b = new String("Java");
+```
+
+### Using `==`
+
+```java
+System.out.println(a == b);
+```
+
+Output:
+
+```text
+false
+```
+
+### Using `.equals()`
+
+```java
+System.out.println(a.equals(b));
+```
+
+Output:
+
+```text
+true
+```
+
+Why?
+
+```text
+==
+↓
+Same object/reference?
+
+.equals()
+↓
+Same content/value?
+```
+
+For Strings, `.equals()` compares the characters.
+
+---
+
+# 5. Why Are Strings Immutable?
+
+Strings cannot be modified after they are created.
+
+Example:
+
+```java
+String name = "Java";
+
+name.concat(" Programming");
+
+System.out.println(name);
+```
+
+Output:
+
+```text
+Java
+```
+
+Why?
+
+Because:
+
+```java
+name.concat(" Programming");
+```
+
+creates a new String, but we did not store the returned reference.
+
+Correct:
+
+```java
+name = name.concat(" Programming");
+
+System.out.println(name);
+```
+
+Output:
+
+```text
+Java Programming
+```
+
+---
+
+# 6. How Immutability Helps the String Pool
+
+Imagine if Strings could be changed.
+
+```java
+String a = "Hello";
+String b = "Hello";
+```
+
+Both may refer to the same pooled object.
+
+If one person could modify:
+
+```text
+"Hello"
+```
+
+into:
+
+```text
+"Bye"
+```
+
+then both `a` and `b` could unexpectedly change.
+
+That would be dangerous.
+
+Because Strings are **immutable**, Java can safely share pooled String objects.
+
+```text
+Shared Object
+      +
+Cannot Be Modified
+      =
+Safe Reuse
+```
+
+---
+
+# 7. The `intern()` Method
+
+Java provides:
+
+```java
+intern()
+```
+
+to obtain the canonical pooled representation of a String.
+
+Example:
+
+```java
+String a = new String("Java");
+String b = a.intern();
+
+String c = "Java";
+
+System.out.println(b == c);
+```
+
+Output:
+
+```text
+true
+```
+
+Why?
+
+Both `b` and `c` refer to the canonical pooled String.
+
+---
+
+# 8. A Common Trap
+
+Consider:
+
+```java
+String a = "Hello";
+String b = "Hel" + "lo";
+
+System.out.println(a == b);
+```
+
+Output:
+
+```text
+true
+```
+
+Why?
+
+Because the compiler can evaluate constant expressions.
+
+Conceptually:
+
+```text
+"Hel" + "lo"
+        ↓
+      "Hello"
+```
+
+Now compare this:
+
+```java
+String part = "Hel";
+
+String a = "Hello";
+String b = part + "lo";
+
+System.out.println(a == b);
+```
+
+The result can be:
+
+```text
+false
+```
+
+because the concatenation happens at runtime and produces a different String object.
+
+This is one reason you should not use `==` for normal String content comparison.
+
+---
+
+# 9. Real-World Rule
+
+❌ Avoid this:
+
+```java
+if (username == "admin") {
+    // ...
+}
+```
+
+✅ Use:
+
+```java
+if ("admin".equals(username)) {
+    // ...
+}
+```
+
+This has another advantage.
+
+If:
+
+```java
+username = null;
+```
+
+then:
+
+```java
+username.equals("admin");
+```
+
+causes:
+
+```text
+NullPointerException
+```
+
+But:
+
+```java
+"admin".equals(username);
+```
+
+safely returns:
+
+```text
+false
+```
+
+---
+
+# 🔍 Complete Example
+
+```java
+public class Main {
+
+    public static void main(String[] args) {
+
+        String a = "Java";
+        String b = "Java";
+
+        String c = new String("Java");
+        String d = new String("Java");
+
+        System.out.println(a == b);
+        System.out.println(c == d);
+
+        System.out.println(c.equals(d));
+
+        String e = c.intern();
+
+        System.out.println(a == e);
+    }
+}
+```
+
+Output:
+
+```text
+true
+false
+true
+true
+```
+
+---
+
+# ⚖️ Quick Comparison
+
+| Expression         | Meaning                                          |
+| ------------------ | ------------------------------------------------ |
+| `a == b`           | Are both references pointing to the same object? |
+| `a.equals(b)`      | Do both Strings contain the same characters?     |
+| `"text".equals(a)` | Safe content comparison, even if `a` is `null`   |
+| `intern()`         | Returns the canonical pooled representation      |
+
+---
+
+# 🧠 Easy Memory Trick
+
+```text
+String Literal
+        ↓
+Can use existing pooled String
+
+new String()
+        ↓
+Creates a new String object
+
+== 
+        ↓
+Reference comparison
+
+.equals()
+        ↓
+Content comparison
+```
+
+---
+
+# 🔑 Final Takeaway
+
+The String Pool is one of the reasons Java can efficiently reuse commonly used String values.
+
+The important rule is:
+
+> **`==` checks whether two references point to the same object, while `.equals()` checks whether two Strings have the same content.**
+
+Even if `==` sometimes returns `true` for String literals, you should **not rely on it for content comparison**.
+
+Use:
+
+```java
+"expectedValue".equals(actualValue);
+```
+
+for safe and reliable String comparisons.
+
+---
+
+⭐ **Why this concept matters**
+
+The Java String Pool connects several important Java concepts:
+
+* Object references
+* Heap memory
+* Immutability
+* `==`
+* `.equals()`
+* Memory optimization
+* Compiler optimizations
+
+Understanding it helps explain why two Strings that *look identical* can behave differently in Java.
