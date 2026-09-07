@@ -1,0 +1,540 @@
+# Java Pass by Value — Primitives vs Object References
+
+One of the most misunderstood concepts in Java is:
+
+> **Does Java use Pass by Value or Pass by Reference?**
+
+The answer is simple:
+
+# Java is always Pass by Value.
+
+However, things become confusing when objects are involved.
+
+This README explains:
+
+* Pass by Value
+* Primitive variables
+* Object references
+* Why object modifications can affect the original object
+* Why reassigning an object inside a method does not affect the original reference
+
+---
+
+# 1. What Does Pass by Value Mean?
+
+Pass by Value means:
+
+> A method receives a copy of the variable's value.
+
+When we pass something to a method, Java creates a copy of the value and gives that copy to the method.
+
+The original variable itself is not directly passed.
+
+---
+
+# 2. Example with Primitive Values
+
+Consider:
+
+```java
+public class Main {
+
+    static void changeNumber(int number) {
+        number = 100;
+    }
+
+    public static void main(String[] args) {
+
+        int x = 10;
+
+        changeNumber(x);
+
+        System.out.println(x);
+    }
+}
+```
+
+### Output
+
+```text
+10
+```
+
+Why?
+
+Initially:
+
+```text
+x = 10
+```
+
+When we call:
+
+```java
+changeNumber(x);
+```
+
+Java copies the value:
+
+```text
+main()                    changeNumber()
+
+x = 10  ───────────────►  number = 10
+                              │
+                              ▼
+                         number = 100
+```
+
+Only the local copy changes.
+
+The original `x` remains:
+
+```text
+10
+```
+
+---
+
+# 3. What Happens with Objects?
+
+Now consider an object.
+
+```java
+class Student {
+
+    String name;
+
+    Student(String name) {
+        this.name = name;
+    }
+}
+```
+
+```java
+public class Main {
+
+    static void changeName(Student student) {
+        student.name = "Rahul";
+    }
+
+    public static void main(String[] args) {
+
+        Student s = new Student("Nikitha");
+
+        changeName(s);
+
+        System.out.println(s.name);
+    }
+}
+```
+
+### Output
+
+```text
+Rahul
+```
+
+This makes many people think:
+
+> Java passed the object by reference.
+
+But that is not what happened.
+
+---
+
+# 4. What Java Actually Passes
+
+The variable `s` does not contain the entire object.
+
+It contains a **reference value** that points to the object.
+
+Conceptually:
+
+```text
+s
+│
+▼
+Student Object
+name = Nikitha
+```
+
+When we call:
+
+```java
+changeName(s);
+```
+
+Java copies the reference value.
+
+```text
+main()                      changeName()
+
+s ────────────┐             student ───────┐
+              │                            │
+              └──────────────┬─────────────┘
+                             ▼
+                      Student Object
+                      name = Nikitha
+```
+
+Both references point to the same object.
+
+Therefore:
+
+```java
+student.name = "Rahul";
+```
+
+modifies that shared object.
+
+So:
+
+```text
+s.name → Rahul
+```
+
+---
+
+# 🔥 Important Rule
+
+Java passes:
+
+```text
+Primitive
+↓
+Copy of the primitive value
+```
+
+Java passes:
+
+```text
+Object
+↓
+Copy of the reference value
+```
+
+Java **never passes the actual variable itself** to the method.
+
+---
+
+# 5. The Biggest Proof — Reassigning the Reference
+
+This example proves that Java is not pass-by-reference.
+
+```java
+class Student {
+
+    String name;
+
+    Student(String name) {
+        this.name = name;
+    }
+}
+
+public class Main {
+
+    static void changeStudent(Student student) {
+
+        student = new Student("Rahul");
+    }
+
+    public static void main(String[] args) {
+
+        Student s = new Student("Nikitha");
+
+        changeStudent(s);
+
+        System.out.println(s.name);
+    }
+}
+```
+
+### Output
+
+```text
+Nikitha
+```
+
+Why?
+
+Initially:
+
+```text
+s ───────────────► Student("Nikitha")
+```
+
+When the method is called:
+
+```text
+s ───────────────► Student("Nikitha")
+
+student ─────────► Student("Nikitha")
+```
+
+Both references point to the same object.
+
+But inside the method:
+
+```java
+student = new Student("Rahul");
+```
+
+Only the copied reference is changed.
+
+```text
+s ───────────────► Student("Nikitha")
+
+
+student ─────────► Student("Rahul")
+```
+
+The original `s` remains unchanged.
+
+---
+
+# 6. Modifying vs Reassigning
+
+This is the key difference.
+
+## Modifying the Object
+
+```java
+student.name = "Rahul";
+```
+
+Both references still point to the same object.
+
+So the original object changes.
+
+---
+
+## Reassigning the Reference
+
+```java
+student = new Student("Rahul");
+```
+
+Only the local copy of the reference changes.
+
+The original reference remains unchanged.
+
+---
+
+# ⚖️ The Most Important Comparison
+
+| Operation                  | Original Object Changes? |
+| -------------------------- | ------------------------ |
+| Modify object fields       | ✅ Yes                    |
+| Modify object contents     | ✅ Yes                    |
+| Reassign local reference   | ❌ No                     |
+| Change primitive parameter | ❌ No                     |
+
+---
+
+# 7. Example with `ArrayList`
+
+This becomes even more interesting with collections.
+
+```java
+import java.util.*;
+
+public class Main {
+
+    static void addNumber(List<Integer> list) {
+
+        list.add(100);
+    }
+
+    public static void main(String[] args) {
+
+        List<Integer> numbers = new ArrayList<>();
+
+        numbers.add(10);
+
+        addNumber(numbers);
+
+        System.out.println(numbers);
+    }
+}
+```
+
+### Output
+
+```text
+[10, 100]
+```
+
+The method receives a copy of the reference.
+
+But both references point to the same `ArrayList`.
+
+Therefore:
+
+```java
+list.add(100);
+```
+
+modifies the same object.
+
+---
+
+# 8. But What If We Reassign the List?
+
+```java
+static void changeList(List<Integer> list) {
+
+    list = new ArrayList<>();
+
+    list.add(100);
+}
+```
+
+Now:
+
+```java
+List<Integer> numbers = new ArrayList<>();
+
+numbers.add(10);
+
+changeList(numbers);
+
+System.out.println(numbers);
+```
+
+### Output
+
+```text
+[10]
+```
+
+Why?
+
+Because the method changed only its local copy of the reference.
+
+```text
+Original:
+
+numbers ─────► [10]
+
+
+Inside Method:
+
+list ─────────► [100]
+```
+
+The original `numbers` reference still points to:
+
+```text
+[10]
+```
+
+---
+
+# 🧠 The Easy Way to Remember
+
+```text
+Java is ALWAYS Pass by Value
+```
+
+For primitives:
+
+```text
+10
+↓ copied
+10
+```
+
+For objects:
+
+```text
+Reference
+↓ copied
+Reference
+```
+
+Both copied references can point to the same object.
+
+---
+
+# 9. Real-World Analogy
+
+Imagine an object is a house.
+
+```text
+🏠 House
+```
+
+A reference is the house address.
+
+When you call a method, Java gives the method a **copy of the address**.
+
+```text
+Original Person → Copy of Address → House
+Method Person   → Copy of Address → House
+```
+
+Both people can visit and modify the same house.
+
+But if the method person changes their copied address:
+
+```text
+Method Person → New House
+```
+
+the original person's address does not change.
+
+---
+
+# 🔑 Final Takeaway
+
+The biggest misconception is:
+
+❌ Java passes objects by reference.
+
+The correct explanation is:
+
+✅ **Java passes a copy of the object reference by value.**
+
+```text
+Primitive Variable
+        ↓
+Copy of Value
+
+
+Object Variable
+        ↓
+Copy of Reference
+        ↓
+Both references may point
+to the same object
+```
+
+This explains why:
+
+```java
+object.field = value;
+```
+
+can affect the original object, while:
+
+```java
+object = new Object();
+```
+
+inside a method does not change the caller's reference.
+
+---
+
+# ⭐ Key Rule to Remember
+
+> **Java is always pass-by-value. When objects are passed, the value being copied is the reference.**
+
+Understanding this concept makes several other Java topics easier:
+
+* Object references
+* Stack vs Heap
+* Method calls
+* Collections
+* Shallow vs Deep Copy
+* Mutability
+* Object behavior inside methods
