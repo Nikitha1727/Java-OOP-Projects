@@ -1,0 +1,548 @@
+# Java Memory Leaks — Yes, Java Can Have Them Too
+
+Java has **Garbage Collection (GC)**, so many people assume:
+
+> “Java programs cannot have memory leaks.”
+
+This is a misconception.
+
+Java can still have memory leaks.
+
+The difference is that a Java memory leak usually does not happen because memory was manually forgotten like in languages such as C or C++. Instead, it happens when objects are **no longer useful but are still reachable**.
+
+---
+
+# 🧠 What Is a Memory Leak?
+
+A memory leak occurs when:
+
+> An object is no longer needed by the application, but it is still being kept in memory because something still references it.
+
+Consider this:
+
+```text
+Application no longer needs object
+              ↓
+But a reference still exists
+              ↓
+Garbage Collector cannot remove it
+              ↓
+Memory continues being used
+```
+
+This is the core idea behind memory leaks in Java.
+
+---
+
+# 1. How Garbage Collection Normally Works
+
+Suppose we create an object:
+
+```java
+Student student = new Student();
+```
+
+Conceptually:
+
+```text
+student ───────► Student Object
+```
+
+As long as a reachable reference points to the object, it remains available.
+
+Now:
+
+```java
+student = null;
+```
+
+Conceptually:
+
+```text
+Student Object
+     ↑
+ No reachable reference
+```
+
+The object may now become eligible for garbage collection.
+
+---
+
+# ⚠️ The Important Rule
+
+Garbage Collection does **not** ask:
+
+> “Is this object useful?”
+
+Instead, it is concerned with whether the object is still **reachable**.
+
+So this can happen:
+
+```text
+Object is useless ❌
+
+But still reachable ✅
+
+Therefore GC cannot collect it.
+```
+
+That is the foundation of many Java memory leaks.
+
+---
+
+# 2. Memory Leak Using a Static Collection
+
+One of the most common examples involves `static` collections.
+
+```java
+import java.util.ArrayList;
+import java.util.List;
+
+public class MemoryLeakExample {
+
+    private static final List<Object> data = new ArrayList<>();
+
+    public static void main(String[] args) {
+
+        while (true) {
+
+            data.add(new Object());
+        }
+    }
+}
+```
+
+What happens?
+
+Every iteration creates a new object:
+
+```text
+Object 1
+Object 2
+Object 3
+Object 4
+...
+```
+
+All of them are stored inside:
+
+```java
+static List<Object> data
+```
+
+Conceptually:
+
+```text
+Class
+ │
+ ▼
+Static List
+ │
+ ├── Object 1
+ ├── Object 2
+ ├── Object 3
+ └── Object 4
+```
+
+Because the static list continues to hold references, the objects remain reachable.
+
+Eventually, the application may run out of memory.
+
+---
+
+# 3. Why `static` Can Be Dangerous
+
+A static field generally belongs to the class and can remain reachable for a long time.
+
+Example:
+
+```java
+static List<User> users = new ArrayList<>();
+```
+
+If the application continuously adds objects but never removes them:
+
+```java
+users.add(new User());
+```
+
+memory usage can continuously grow.
+
+The Garbage Collector cannot simply remove those objects because the list still references them.
+
+---
+
+# 4. Unused Objects Inside Collections
+
+Consider:
+
+```java
+List<Student> students = new ArrayList<>();
+
+students.add(new Student("A"));
+students.add(new Student("B"));
+students.add(new Student("C"));
+```
+
+Later, suppose your application no longer needs these students.
+
+If you keep the collection around:
+
+```text
+List
+ │
+ ├── Student A
+ ├── Student B
+ └── Student C
+```
+
+the objects can remain reachable.
+
+A better approach is to remove objects that are no longer required.
+
+```java
+students.clear();
+```
+
+or:
+
+```java
+students.remove(student);
+```
+
+---
+
+# 5. Listener Memory Leaks
+
+Memory leaks can also happen with listeners.
+
+Imagine:
+
+```java
+button.addActionListener(listener);
+```
+
+The button now holds a reference to the listener.
+
+Conceptually:
+
+```text
+Button
+   │
+   ▼
+Listener
+```
+
+If the listener is no longer needed but is never removed:
+
+```java
+button.removeActionListener(listener);
+```
+
+it may remain reachable unnecessarily.
+
+This is common in:
+
+* GUI applications
+* Event-driven systems
+* Observer patterns
+* Long-running applications
+
+---
+
+# 6. ThreadLocal Memory Leaks
+
+`ThreadLocal` can also cause memory problems if used carelessly in long-running applications.
+
+Example:
+
+```java
+private static final ThreadLocal<byte[]> data =
+        new ThreadLocal<>();
+```
+
+Later:
+
+```java
+data.set(new byte[1024 * 1024]);
+```
+
+If the thread continues living for a long time, the stored data may remain associated with that thread longer than expected.
+
+A good practice when finished is:
+
+```java
+data.remove();
+```
+
+Especially in environments using thread pools.
+
+---
+
+# 7. Caches Can Cause Memory Leaks
+
+Caches are useful:
+
+```text
+Request
+   ↓
+Check Cache
+   ↓
+Use Existing Data
+```
+
+But an uncontrolled cache can become a memory problem.
+
+Example:
+
+```java
+Map<String, Object> cache = new HashMap<>();
+```
+
+If the application continuously adds data:
+
+```java
+cache.put(key, value);
+```
+
+but never removes old entries:
+
+```text
+Cache
+ │
+ ├── Old Data
+ ├── Older Data
+ ├── Very Old Data
+ └── Even More Data
+```
+
+memory usage keeps increasing.
+
+A cache should usually have a strategy such as:
+
+* Maximum size
+* Expiration
+* Eviction
+* Time-to-live (TTL)
+
+---
+
+# 8. Inner Classes Can Accidentally Keep Objects Alive
+
+A non-static inner class can hold an implicit reference to its outer object.
+
+Example:
+
+```java
+class Outer {
+
+    class Inner {
+
+    }
+}
+```
+
+Conceptually:
+
+```text
+Inner Object
+      │
+      ▼
+Outer Object
+```
+
+If an inner object lives longer than expected, it can also keep the outer object reachable.
+
+In situations where an outer reference is unnecessary, a `static` nested class may be more appropriate.
+
+---
+
+# 🔍 Memory Leak vs Garbage Collection
+
+| Garbage Collection          | Memory Leak                                    |
+| --------------------------- | ---------------------------------------------- |
+| Removes unreachable objects | Keeps growing because objects remain reachable |
+| Automatic process           | Usually caused by unnecessary references       |
+| Frees eligible memory       | GC cannot free objects still referenced        |
+| Normal JVM behavior         | Application design/problem                     |
+
+The Garbage Collector is not broken during a memory leak.
+
+The problem is:
+
+> The application is still telling Java that the objects are reachable.
+
+---
+
+# 9. Example of the Core Problem
+
+```java
+Object object = new Object();
+```
+
+Then:
+
+```text
+Reference
+    │
+    ▼
+ Object
+```
+
+If the object is no longer needed but the reference remains:
+
+```text
+Still Reachable
+       ↓
+GC Cannot Remove It
+```
+
+If the reference disappears:
+
+```text
+Unreachable
+       ↓
+Eligible for Garbage Collection
+```
+
+---
+
+# 10. Common Causes of Java Memory Leaks
+
+### 🔴 Static Collections
+
+Objects continuously added but never removed.
+
+### 🔴 Caches Without Limits
+
+Old data remains forever.
+
+### 🔴 Listeners Not Removed
+
+Event sources keep references to listeners.
+
+### 🔴 ThreadLocal Misuse
+
+Data remains associated with long-lived threads.
+
+### 🔴 Long-Lived Collections
+
+Objects are stored even after they are no longer useful.
+
+### 🔴 Incorrect Object Lifecycle Management
+
+Objects remain referenced longer than necessary.
+
+---
+
+# 🛠️ How to Prevent Memory Leaks
+
+## 1. Remove Unused References
+
+```java
+collection.remove(object);
+```
+
+---
+
+## 2. Clear Collections When Appropriate
+
+```java
+collection.clear();
+```
+
+---
+
+## 3. Use Bounded Caches
+
+Avoid unlimited cache growth.
+
+```text
+Maximum Size
++
+Expiration
++
+Eviction
+```
+
+---
+
+## 4. Remove Listeners
+
+When a listener is no longer needed:
+
+```java
+button.removeActionListener(listener);
+```
+
+---
+
+## 5. Clean Up ThreadLocal Data
+
+```java
+threadLocal.remove();
+```
+
+---
+
+## 6. Monitor Memory Usage
+
+Memory problems can often be investigated using profiling and monitoring tools.
+
+Things to watch for:
+
+```text
+Heap Usage Increasing
+        ↓
+Objects Not Being Released
+        ↓
+GC Running Frequently
+        ↓
+Application Performance Decreasing
+```
+
+---
+
+# 🧠 Easy Way to Remember
+
+```text
+Garbage Collector asks:
+
+"Can I still reach this object?"
+```
+
+It does **not** ask:
+
+```text
+"Does the application still need this object?"
+```
+
+That difference explains Java memory leaks.
+
+---
+
+# 🔑 Final Takeaway
+
+Java has Garbage Collection, but that does **not** mean memory leaks are impossible.
+
+A Java memory leak happens when:
+
+```text
+Object is no longer useful
+        +
+Still reachable through a reference
+        =
+Memory Leak
+```
+
+The Garbage Collector can only remove objects that are no longer reachable.
+
+---
+
+# ⭐ Key Rule
+
+> **Garbage Collection removes unreachable objects, not unnecessary objects.**
+
+Understanding this distinction is extremely important when building long-running Java applications, servers, caches, GUI applications, and enterprise systems.
+
+Java handles memory management automatically — but developers are still responsible for managing **object references and lifecycles**.
