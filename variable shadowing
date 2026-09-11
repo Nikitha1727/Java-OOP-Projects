@@ -1,0 +1,663 @@
+# Java Variable Shadowing
+
+Sometimes Java allows you to have variables with the **same name** in different scopes.
+
+This can be confusing because one variable can temporarily **hide** another variable with the same name.
+
+This is called **variable shadowing**.
+
+---
+
+# 1. What Is Variable Shadowing?
+
+Consider:
+
+```java
+class Student {
+
+    String name = "Student";
+
+    void display() {
+
+        String name = "Local";
+
+        System.out.println(name);
+    }
+}
+```
+
+There are two variables called:
+
+```text
+name
+```
+
+One is an **instance variable**:
+
+```java
+String name = "Student";
+```
+
+The other is a **local variable**:
+
+```java
+String name = "Local";
+```
+
+Inside `display()`, the local variable has priority.
+
+So:
+
+```java
+System.out.println(name);
+```
+
+prints:
+
+```text
+Local
+```
+
+The local variable is **shadowing** the instance variable.
+
+---
+
+# 2. Why Does This Happen?
+
+Java determines which variable to use based on **scope**.
+
+A simple way to think about it:
+
+```text
+Class
+ │
+ └── instance variable: name
+       │
+       └── method
+             │
+             └── local variable: name
+```
+
+When Java sees:
+
+```java
+name
+```
+
+inside the method, it first looks in the nearest scope.
+
+It finds the local variable.
+
+Therefore, the local variable is used.
+
+---
+
+# 3. Parameter Shadowing
+
+Shadowing commonly happens with constructor parameters.
+
+Example:
+
+```java
+class Student {
+
+    String name;
+
+    Student(String name) {
+        name = name;
+    }
+}
+```
+
+This looks like we are assigning the parameter to the instance variable.
+
+But we are not.
+
+Both `name`s refer to the parameter.
+
+So effectively:
+
+```text
+parameter name → parameter name
+```
+
+The instance variable is not changed.
+
+---
+
+# 4. The `this` Keyword Solves This
+
+We use:
+
+```java
+this
+```
+
+to refer to the **current object**.
+
+So we write:
+
+```java
+class Student {
+
+    String name;
+
+    Student(String name) {
+        this.name = name;
+    }
+}
+```
+
+Now Java can distinguish them:
+
+```text
+this.name
+   ↓
+instance variable
+
+name
+   ↓
+parameter
+```
+
+So:
+
+```java
+this.name = name;
+```
+
+means:
+
+```text
+object's name = parameter's name
+```
+
+---
+
+# 5. Understanding `this`
+
+Suppose:
+
+```java
+Student s = new Student("Nikitha");
+```
+
+Inside the constructor:
+
+```java
+this
+```
+
+refers to the object being created.
+
+Conceptually:
+
+```text
+s
+│
+▼
+Student Object
+│
+└── name = "Nikitha"
+```
+
+`this.name` means:
+
+> The `name` belonging to this object.
+
+---
+
+# 6. Local Variable vs Instance Variable
+
+Consider:
+
+```java
+class Student {
+
+    String name = "Student";
+
+    void display() {
+
+        String name = "Local";
+
+        System.out.println(name);
+        System.out.println(this.name);
+    }
+}
+```
+
+Output:
+
+```text
+Local
+Student
+```
+
+Why?
+
+```java
+name
+```
+
+means the nearest local variable.
+
+While:
+
+```java
+this.name
+```
+
+explicitly means the object's instance variable.
+
+---
+
+# 7. Parameter vs Instance Variable
+
+This is probably the most common use of `this`.
+
+```java
+class Student {
+
+    String name;
+
+    void setName(String name) {
+
+        this.name = name;
+    }
+}
+```
+
+Here:
+
+```text
+this.name
+```
+
+→ instance variable
+
+```text
+name
+```
+
+→ method parameter
+
+Therefore:
+
+```java
+this.name = name;
+```
+
+means:
+
+```text
+instance variable = parameter
+```
+
+---
+
+# 8. Shadowing Can Happen in Blocks Too
+
+Shadowing isn't limited to methods.
+
+For example:
+
+```java
+class Demo {
+
+    int number = 10;
+
+    void display() {
+
+        int number = 20;
+
+        {
+            int value = 30;
+
+            System.out.println(number);
+        }
+    }
+}
+```
+
+Inside the method:
+
+```java
+number
+```
+
+refers to:
+
+```text
+20
+```
+
+because the local variable is closer than the instance variable.
+
+---
+
+# 9. Why Is Shadowing Important?
+
+At first, shadowing might seem like a small syntax issue.
+
+But it becomes important when you work with:
+
+* Constructors
+* Setters
+* Methods
+* Inheritance
+* Nested blocks
+* Large programs
+* Debugging
+
+A variable can exist, but you may accidentally be accessing a **different variable with the same name**.
+
+---
+
+# 10. Shadowing vs Changing the Variable
+
+Look carefully at this:
+
+```java
+class Student {
+
+    String name = "Student";
+
+    void change() {
+
+        String name = "Local";
+    }
+}
+```
+
+The instance variable:
+
+```text
+name = "Student"
+```
+
+has NOT changed.
+
+The local variable is a completely separate variable.
+
+Conceptually:
+
+```text
+Student Object
+│
+└── name = "Student"
+
+Method
+│
+└── local name = "Local"
+```
+
+They simply have the same name.
+
+---
+
+# 11. `this` Makes the Difference Clear
+
+```java
+class Student {
+
+    String name = "Student";
+
+    void display() {
+
+        String name = "Local";
+
+        System.out.println(name);
+        System.out.println(this.name);
+    }
+}
+```
+
+Think:
+
+```text
+name
+ ↓
+nearest variable
+ ↓
+Local
+
+
+this.name
+ ↓
+current object's variable
+ ↓
+Student
+```
+
+---
+
+# 12. Shadowing in Inheritance
+
+Shadowing can also happen between a parent class and child class.
+
+Example:
+
+```java
+class Parent {
+
+    int number = 10;
+}
+```
+
+```java
+class Child extends Parent {
+
+    int number = 20;
+}
+```
+
+Now the child has its own variable called:
+
+```text
+number
+```
+
+The parent's variable still exists.
+
+There are now two different fields:
+
+```text
+Parent
+└── number = 10
+
+Child
+└── number = 20
+```
+
+The child field **hides/shadows** the parent field when accessed through the child context.
+
+---
+
+# 13. `super` Can Access the Parent Field
+
+Just like:
+
+```java
+this
+```
+
+refers to the current object's members,
+
+```java
+super
+```
+
+can be used to refer to the parent class's members.
+
+Example:
+
+```java
+class Child extends Parent {
+
+    int number = 20;
+
+    void display() {
+
+        System.out.println(number);
+        System.out.println(super.number);
+    }
+}
+```
+
+Output:
+
+```text
+20
+10
+```
+
+So:
+
+```text
+number
+   ↓
+Child's number
+
+super.number
+   ↓
+Parent's number
+```
+
+---
+
+# 14. `this` vs `super`
+
+Remember this simple difference:
+
+| Keyword | Refers to            |
+| ------- | -------------------- |
+| `this`  | Current object/class |
+| `super` | Parent class         |
+
+Example:
+
+```java
+this.name
+```
+
+means:
+
+> Current object's `name`
+
+While:
+
+```java
+super.name
+```
+
+means:
+
+> Parent class's `name`
+
+---
+
+# 15. The Basic Rule Java Uses
+
+When Java sees a variable name, it generally looks for the closest matching declaration in the current scope.
+
+For example:
+
+```text
+Local variable
+      ↓
+Method parameter
+      ↓
+Instance variable
+      ↓
+Parent members
+```
+
+The exact lookup rules have more details, but this mental model is enough to understand basic shadowing.
+
+---
+
+# 🧠 Easy Example to Remember
+
+```java
+class Student {
+
+    String name = "Student";
+
+    Student(String name) {
+
+        this.name = name;
+    }
+}
+```
+
+Remember:
+
+```text
+this.name
+    ↓
+object's variable
+
+name
+    ↓
+parameter
+```
+
+Therefore:
+
+```java
+this.name = name;
+```
+
+means:
+
+> Put the parameter's value into the object's `name`.
+
+---
+
+# 🔑 Final Takeaway
+
+**Variable shadowing** happens when a variable in a closer scope has the same name as another variable in an outer scope.
+
+```text
+Outer variable
+      ↓
+   name
+
+Inner variable
+      ↓
+   name
+```
+
+The inner variable temporarily **shadows** the outer one.
+
+The two most important tools for dealing with this are:
+
+```java
+this
+```
+
+for the current object's variable, and:
+
+```java
+super
+```
+
+for the parent class's member.
+
+### Remember:
+
+```text
+name
+↓
+Nearest matching variable
+
+this.name
+↓
+Current object's name
+
+super.name
+↓
+Parent's name
+```
+
+This small concept becomes extremely useful once you start working with **constructors, inheritance, and object-oriented Java**.
