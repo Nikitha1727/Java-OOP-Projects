@@ -1,0 +1,600 @@
+# Java `final` References — `final` Does Not Mean Immutable
+
+When we learn `final`, we often hear:
+
+> **A final variable cannot be changed.**
+
+That statement is true, but there is an important detail when the variable stores an **object reference**.
+
+```java
+final Student student = new Student();
+```
+
+Can we change the `Student` object?
+
+**Yes.**
+
+Can we make `student` refer to another `Student` object?
+
+**No.**
+
+Understanding this difference is extremely important.
+
+---
+
+# 1. What Does `final` Actually Do?
+
+Consider:
+
+```java
+final int age = 20;
+```
+
+This cannot be changed:
+
+```java
+age = 21;   // ❌
+```
+
+The variable cannot be assigned another value.
+
+---
+
+# 2. What About Objects?
+
+Now consider:
+
+```java
+final Student student = new Student();
+```
+
+Here, `student` is not the object itself.
+
+It is a **reference to the object**.
+
+Conceptually:
+
+```text
+student
+   │
+   ▼
+Student Object
+```
+
+The `final` keyword applies to the **reference**.
+
+It does not automatically make the object immutable.
+
+---
+
+# 3. You Cannot Reassign the Reference
+
+This is not allowed:
+
+```java
+final Student student = new Student();
+
+student = new Student();   // ❌
+```
+
+Why?
+
+Because `student` is a final reference.
+
+It must continue referring to the same object.
+
+```text
+student ─────► Object 1
+```
+
+It cannot become:
+
+```text
+student ─────► Object 2
+```
+
+---
+
+# 4. But You Can Change the Object
+
+Suppose:
+
+```java
+class Student {
+
+    String name;
+}
+```
+
+Now:
+
+```java
+final Student student = new Student();
+
+student.name = "Nikitha";
+```
+
+This is perfectly valid.
+
+Why?
+
+We didn't change the reference.
+
+We changed the **object that the reference points to**.
+
+Conceptually:
+
+```text
+student
+   │
+   ▼
+Student Object
+└── name = "Nikitha"
+```
+
+The reference is still pointing to the same object.
+
+---
+
+# 5. The Important Difference
+
+Compare these two:
+
+### Changing the reference
+
+```java
+student = new Student();
+```
+
+❌ Not allowed.
+
+### Changing the object
+
+```java
+student.name = "Nikitha";
+```
+
+✅ Allowed.
+
+So:
+
+```text
+final reference
+      ↓
+Cannot change what it points to
+
+Object
+      ↓
+Can still potentially be changed
+```
+
+---
+
+# 6. Simple Example
+
+```java
+class Student {
+
+    String name;
+}
+
+public class Main {
+
+    public static void main(String[] args) {
+
+        final Student student = new Student();
+
+        student.name = "Nikitha";
+
+        System.out.println(student.name);
+    }
+}
+```
+
+Output:
+
+```text
+Nikitha
+```
+
+The object was modified even though the reference was `final`.
+
+---
+
+# 7. Think of It Like an Address
+
+Imagine:
+
+```text
+student
+   ↓
+House Address
+   ↓
+123 Main Street
+```
+
+Making the reference `final` means:
+
+> You cannot change the address stored in `student`.
+
+But the house itself can still change.
+
+For example:
+
+```text
+Address stays the same
+        ↓
+123 Main Street
+
+House contents can change
+        ↓
+Furniture
+Paint
+Objects
+```
+
+Similarly:
+
+```text
+final reference
+        ↓
+Reference cannot change
+
+Object
+        ↓
+May still change
+```
+
+---
+
+# 8. `final` Reference With an Array
+
+This becomes even easier to see with arrays.
+
+```java
+final int[] numbers = {10, 20, 30};
+```
+
+We cannot do:
+
+```java
+numbers = new int[]{40, 50, 60};   // ❌
+```
+
+because we're trying to change the reference.
+
+But:
+
+```java
+numbers[0] = 100;
+```
+
+is allowed.
+
+Now the array becomes:
+
+```text
+100 20 30
+```
+
+The reference still points to the same array.
+
+---
+
+# 9. What `final` Really Means
+
+When applied to a reference:
+
+```java
+final Student student;
+```
+
+`final` means:
+
+> **This reference can be assigned only once.**
+
+It does NOT mean:
+
+> **The object can never change.**
+
+That's the key distinction.
+
+---
+
+# 10. `final` Reference vs Immutable Object
+
+These are two different concepts.
+
+### Final reference
+
+```java
+final Student student = new Student();
+```
+
+The reference cannot change.
+
+But:
+
+```java
+student.name = "A";
+```
+
+may still be allowed.
+
+---
+
+### Immutable object
+
+An immutable object cannot have its state changed after creation.
+
+For example, Java's:
+
+```java
+String
+```
+
+is immutable.
+
+So:
+
+```text
+final
+```
+
+and:
+
+```text
+immutable
+```
+
+are **not the same thing**.
+
+---
+
+# 11. Can Both Exist Together?
+
+Yes.
+
+You can have:
+
+```java
+final String name = "Java";
+```
+
+Here:
+
+```text
+final
+ ↓
+name reference cannot be reassigned
+
+String
+ ↓
+String object is immutable
+```
+
+So neither the reference nor the String's contents can be changed.
+
+But this:
+
+```java
+final Student student = new Student();
+```
+
+does not automatically make `Student` immutable.
+
+---
+
+# 12. Why Is This Important?
+
+This distinction becomes important when working with:
+
+* Objects
+* Arrays
+* Collections
+* Constants
+* Method parameters
+* Multithreading
+* Immutable classes
+* `final` fields
+
+Without understanding it, developers sometimes assume:
+
+```java
+final Object obj
+```
+
+means:
+
+> "This object can never change."
+
+That's incorrect.
+
+---
+
+# 13. Another Example With a List
+
+```java
+final ArrayList<String> names = new ArrayList<>();
+```
+
+We cannot do:
+
+```java
+names = new ArrayList<>();   // ❌
+```
+
+But we can do:
+
+```java
+names.add("Nikitha");
+names.add("Java");
+```
+
+So:
+
+```text
+names
+  │
+  ▼
+ArrayList
+├── Nikitha
+└── Java
+```
+
+The list changed.
+
+The reference didn't.
+
+---
+
+# 14. The Three Things to Separate
+
+When dealing with objects, keep these three ideas separate:
+
+```text
+VARIABLE
+   ↓
+Reference stored in the variable
+   ↓
+OBJECT
+```
+
+For example:
+
+```java
+final Student student = new Student();
+```
+
+Think:
+
+```text
+student
+   ↓
+reference
+   ↓
+Student object
+```
+
+`final` prevents the **reference** from being reassigned.
+
+It does not automatically freeze the **object**.
+
+---
+
+# 15. Common Mistake
+
+A common assumption is:
+
+```java
+final Student student = new Student();
+```
+
+therefore:
+
+```java
+student.name = "Nikitha";
+```
+
+should fail.
+
+But it doesn't.
+
+Because:
+
+```text
+student.name = ...
+```
+
+doesn't replace `student`.
+
+It changes a field inside the object.
+
+---
+
+# 16. Quick Comparison
+
+| Code                      | Allowed? | Why                     |
+| ------------------------- | -------- | ----------------------- |
+| `student = new Student()` | ❌        | Changes final reference |
+| `student.name = "A"`      | ✅        | Changes object state    |
+| `numbers = new int[5]`    | ❌        | Changes final reference |
+| `numbers[0] = 10`         | ✅        | Changes array contents  |
+| `names.add("Java")`       | ✅        | Changes list contents   |
+
+---
+
+# 🧠 Easy Mental Model
+
+Remember:
+
+```text
+final reference
+       ↓
+"Don't change the address."
+```
+
+Not:
+
+```text
+final reference
+       ↓
+"Don't change the object."
+```
+
+So:
+
+```text
+final
+  ↓
+Reference cannot be reassigned
+
+immutable
+  ↓
+Object cannot be changed
+```
+
+These are different concepts.
+
+---
+
+# 🔑 Final Takeaway
+
+The most important example is:
+
+```java
+final Student student = new Student();
+
+student.name = "Nikitha";    // ✅
+
+student = new Student();     // ❌
+```
+
+Why?
+
+Because:
+
+```text
+student.name = "Nikitha"
+        ↓
+Changes the object
+
+
+student = new Student()
+        ↓
+Changes the reference
+```
+
+And `final` prevents the **second** one.
+
+### Remember:
+
+> **`final` reference ≠ immutable object.**
+
+A `final` reference tells Java:
+
+> **"This variable must continue pointing to the same object."**
+
+It does **not** necessarily say:
+
+> **"The object itself can never change."**
