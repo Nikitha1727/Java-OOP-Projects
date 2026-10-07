@@ -1,0 +1,417 @@
+# Java Access Modifiers
+
+Access modifiers in Java control **where a class, variable, method, or constructor can be accessed from**.
+
+In simple words:
+
+> **Access modifiers decide who is allowed to access something in your Java code.**
+
+Java has four access levels:
+
+```text
+public
+protected
+default
+private
+```
+
+---
+
+# 1. Why Do We Need Access Modifiers?
+
+Suppose we have:
+
+```java
+class Student {
+
+    String name;
+    int marks;
+}
+```
+
+Anyone who can access the `Student` object may be able to access these variables.
+
+But sometimes we don't want everything to be accessible everywhere.
+
+For example:
+
+```text
+Student
+ ├── name       → maybe public
+ ├── marks      → maybe private
+ └── password   → definitely private
+```
+
+Access modifiers help us control this.
+
+---
+
+# 2. `public`
+
+`public` means:
+
+> **Accessible from anywhere where the class itself is accessible.**
+
+Example:
+
+```java
+public class Student {
+
+    public String name;
+
+    public void display() {
+        System.out.println(name);
+    }
+}
+```
+
+Another class can access it:
+
+```java
+Student student = new Student();
+
+student.name = "Nikitha";
+student.display();
+```
+
+---
+
+# 3. `private`
+
+`private` means:
+
+> **Accessible only inside the same class.**
+
+Example:
+
+```java
+class Student {
+
+    private int marks;
+
+    void setMarks(int marks) {
+        this.marks = marks;
+    }
+
+    int getMarks() {
+        return marks;
+    }
+}
+```
+
+Now this is not allowed:
+
+```java
+Student student = new Student();
+
+student.marks = 90;
+```
+
+Because `marks` is private.
+
+Instead, we use methods:
+
+```java
+student.setMarks(90);
+
+System.out.println(student.getMarks());
+```
+
+This is one of the basic ideas behind **encapsulation**.
+
+---
+
+# 4. `default`
+
+When we don't write any access modifier, Java gives the member **default/package-private access**.
+
+Example:
+
+```java
+class Student {
+
+    String name;
+
+    void display() {
+        System.out.println(name);
+    }
+}
+```
+
+Here, `name` and `display()` have default access.
+
+They can be accessed by classes in the **same package**.
+
+But classes from a different package cannot directly access them.
+
+---
+
+# 5. `protected`
+
+`protected` allows access:
+
+- Inside the same class
+- Inside the same package
+- In subclasses, including subclasses in another package
+
+Example:
+
+```java
+class Student {
+
+    protected String name;
+}
+```
+
+A subclass can access it:
+
+```java
+class CollegeStudent extends Student {
+
+    void display() {
+        System.out.println(name);
+    }
+}
+```
+
+Here `CollegeStudent` inherits from `Student`, so it can access the protected member.
+
+---
+
+# 6. Simple Comparison
+
+| Modifier | Same Class | Same Package | Subclass | Other Package |
+|---|---|---|---|---|
+| `private` | ✅ | ❌ | ❌ | ❌ |
+| `default` | ✅ | ✅ | ✅* | ❌ |
+| `protected` | ✅ | ✅ | ✅ | Limited |
+| `public` | ✅ | ✅ | ✅ | ✅ |
+
+`*` A subclass in the same package can access default members because it is also in the same package.
+
+For `protected`, a subclass in another package can access the protected member through inheritance.
+
+---
+
+# 7. Easy Way to Remember
+
+Think of a college:
+
+```text
+private
+↓
+Only me
+
+default
+↓
+People in my package
+
+protected
+↓
+My package + my child classes
+
+public
+↓
+Everyone
+```
+
+---
+
+# 8. Access Modifiers and Encapsulation
+
+Access modifiers are closely connected to **encapsulation**.
+
+Instead of:
+
+```java
+class BankAccount {
+
+    public double balance;
+}
+```
+
+Anyone could directly change the balance:
+
+```java
+account.balance = -5000;
+```
+
+A better approach is:
+
+```java
+class BankAccount {
+
+    private double balance;
+
+    public void deposit(double amount) {
+
+        if (amount > 0) {
+            balance += amount;
+        }
+    }
+
+    public double getBalance() {
+        return balance;
+    }
+}
+```
+
+Now the internal data is protected from direct access.
+
+```text
+Outside code
+     ↓
+public methods
+     ↓
+private data
+```
+
+This gives the class more control over how its data is changed.
+
+---
+
+# 9. Access Modifiers for Classes
+
+Top-level classes can normally be:
+
+```java
+public class Student {
+}
+```
+
+or have no modifier:
+
+```java
+class Student {
+}
+```
+
+A top-level class cannot be declared:
+
+```java
+private class Student {
+}
+```
+
+or:
+
+```java
+protected class Student {
+}
+```
+
+because `private` and `protected` are not allowed for top-level classes.
+
+---
+
+# 10. Example
+
+```java
+class Student {
+
+    private String name;
+
+    protected int marks;
+
+    String college;
+
+    public void display() {
+        System.out.println(name);
+        System.out.println(marks);
+        System.out.println(college);
+    }
+}
+```
+
+Here:
+
+```text
+name
+ ↓
+private
+
+marks
+ ↓
+protected
+
+college
+ ↓
+default
+
+display()
+ ↓
+public
+```
+
+Each member has a different level of accessibility.
+
+---
+
+# 11. Why `private` Is Commonly Used
+
+In real Java applications, fields are often made private:
+
+```java
+class Employee {
+
+    private int salary;
+    private String name;
+}
+```
+
+Instead of allowing direct modification:
+
+```java
+employee.salary = -10000;
+```
+
+we control access through methods:
+
+```java
+public void setSalary(int salary) {
+
+    if (salary >= 0) {
+        this.salary = salary;
+    }
+}
+```
+
+This prevents invalid changes.
+
+---
+
+# 12. Access Modifiers in One Diagram
+
+```text
+                    public
+              ┌───────────────┐
+              │               │
+              │   protected   │
+              │  ┌─────────┐  │
+              │  │ default │  │
+              │  │ ┌─────┐ │  │
+              │  │ │private│ │  │
+              │  │ └─────┘ │  │
+              │  └─────────┘  │
+              └───────────────┘
+```
+
+The broader the access level, the more places can access it.
+
+---
+
+# Key Takeaways
+
+- Access modifiers control **visibility and access** in Java.
+- `private` → only inside the same class.
+- `default` → inside the same package.
+- `protected` → same package + subclasses.
+- `public` → accessible broadly.
+- `private` fields are commonly used with public methods to achieve **encapsulation**.
+- Access modifiers help make Java programs safer, organized, and easier to maintain.
+
+---
+
+## One-Line Summary
+
+> **Access modifiers control who can access classes and their members, helping Java achieve encapsulation and better control over code.**
