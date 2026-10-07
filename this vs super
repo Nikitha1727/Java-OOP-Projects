@@ -1,0 +1,556 @@
+# Java `this` vs `super`
+
+In Java, `this` and `super` are keywords used mainly when working with **objects, constructors, and inheritance**.
+
+The easiest way to remember them is:
+
+```text
+this  → current object
+super → parent class
+```
+
+---
+
+# 1. What is `this`?
+
+`this` refers to the **current object**.
+
+Example:
+
+```java
+class Student {
+
+    String name;
+
+    Student(String name) {
+        this.name = name;
+    }
+}
+```
+
+Here we have two `name` variables:
+
+```java
+String name;
+```
+
+and:
+
+```java
+Student(String name)
+```
+
+The parameter `name` hides the instance variable.
+
+So:
+
+```java
+this.name
+```
+
+means:
+
+> The `name` belonging to the current object.
+
+And:
+
+```java
+name
+```
+
+means:
+
+> The `name` parameter.
+
+Therefore:
+
+```java
+this.name = name;
+```
+
+means:
+
+```text
+object's name = parameter's name
+```
+
+---
+
+# 2. Why Do We Use `this`?
+
+Without `this`, the code can become confusing when a parameter has the same name as an instance variable.
+
+Example:
+
+```java
+class Student {
+
+    String name;
+
+    Student(String name) {
+        this.name = name;
+    }
+}
+```
+
+Create an object:
+
+```java
+Student s1 = new Student("Nikitha");
+```
+
+Now:
+
+```text
+s1.name
+   ↓
+"Nikitha"
+```
+
+---
+
+# 3. `this` Can Call Another Constructor
+
+`this()` can be used to call another constructor of the **same class**.
+
+Example:
+
+```java
+class Student {
+
+    String name;
+    int age;
+
+    Student() {
+        this("Unknown", 0);
+    }
+
+    Student(String name, int age) {
+        this.name = name;
+        this.age = age;
+    }
+}
+```
+
+When we write:
+
+```java
+Student s = new Student();
+```
+
+the first constructor calls:
+
+```java
+this("Unknown", 0);
+```
+
+which calls the second constructor.
+
+So:
+
+```text
+Student()
+   ↓
+this("Unknown", 0)
+   ↓
+Student(String, int)
+```
+
+---
+
+# 4. What is `super`?
+
+`super` refers to the **parent class part of the current object**.
+
+Suppose:
+
+```java
+class Person {
+
+    String name = "Person";
+}
+```
+
+and:
+
+```java
+class Student extends Person {
+
+    String name = "Student";
+}
+```
+
+Now:
+
+```java
+Student s = new Student();
+
+System.out.println(s.name);
+```
+
+Output:
+
+```text
+Student
+```
+
+Because the child class has its own `name`.
+
+But:
+
+```java
+System.out.println(super.name);
+```
+
+refers to the parent's `name`.
+
+Output:
+
+```text
+Person
+```
+
+---
+
+# 5. `this` vs `super`
+
+```text
+this
+ ↓
+Current class / current object
+
+super
+ ↓
+Parent class
+```
+
+Example:
+
+```java
+class Person {
+
+    String name = "Parent";
+}
+
+class Student extends Person {
+
+    String name = "Child";
+
+    void display() {
+
+        System.out.println(this.name);
+        System.out.println(super.name);
+    }
+}
+```
+
+Output:
+
+```text
+Child
+Parent
+```
+
+---
+
+# 6. `super()` Calls Parent Constructor
+
+`super()` is used to call the constructor of the parent class.
+
+Example:
+
+```java
+class Person {
+
+    Person() {
+        System.out.println("Person constructor");
+    }
+}
+
+class Student extends Person {
+
+    Student() {
+        super();
+
+        System.out.println("Student constructor");
+    }
+}
+```
+
+Create the object:
+
+```java
+Student s = new Student();
+```
+
+Output:
+
+```text
+Person constructor
+Student constructor
+```
+
+The parent constructor executes first.
+
+---
+
+# 7. Why Does Parent Constructor Run First?
+
+When creating a child object, the parent part of the object must be initialized first.
+
+Think:
+
+```text
+new Student()
+     ↓
+Person constructor
+     ↓
+Student constructor
+     ↓
+Student object ready
+```
+
+This is why constructor execution follows the inheritance hierarchy.
+
+---
+
+# 8. `super` Can Call Parent Methods
+
+Suppose:
+
+```java
+class Person {
+
+    void display() {
+        System.out.println("Person");
+    }
+}
+```
+
+Child class:
+
+```java
+class Student extends Person {
+
+    void display() {
+        System.out.println("Student");
+
+        super.display();
+    }
+}
+```
+
+Now:
+
+```java
+Student s = new Student();
+
+s.display();
+```
+
+Output:
+
+```text
+Student
+Person
+```
+
+Here:
+
+```java
+super.display();
+```
+
+explicitly calls the parent version of the method.
+
+---
+
+# 9. Complete Example
+
+```java
+class Person {
+
+    String name;
+
+    Person(String name) {
+        this.name = name;
+    }
+
+    void display() {
+        System.out.println("Name: " + name);
+    }
+}
+```
+
+Child class:
+
+```java
+class Student extends Person {
+
+    int marks;
+
+    Student(String name, int marks) {
+
+        super(name);
+
+        this.marks = marks;
+    }
+
+    void display() {
+
+        super.display();
+
+        System.out.println("Marks: " + this.marks);
+    }
+}
+```
+
+Create the object:
+
+```java
+Student s = new Student("Nikitha", 90);
+
+s.display();
+```
+
+Output:
+
+```text
+Name: Nikitha
+Marks: 90
+```
+
+Here we used both keywords:
+
+```java
+super(name);
+```
+
+to call the parent constructor.
+
+And:
+
+```java
+this.marks = marks;
+```
+
+to refer to the current object's `marks`.
+
+---
+
+# 10. `this()` vs `super()`
+
+This is very important.
+
+| Keyword | Meaning |
+|---|---|
+| `this` | Current object |
+| `super` | Parent class |
+| `this()` | Calls another constructor in the same class |
+| `super()` | Calls parent class constructor |
+| `this.variable` | Current object's variable |
+| `super.variable` | Parent class variable |
+| `this.method()` | Current class method |
+| `super.method()` | Parent class method |
+
+---
+
+# 11. Important Rule
+
+`this()` and `super()` must be the **first statement inside a constructor**.
+
+Correct:
+
+```java
+Student() {
+    super();
+    System.out.println("Student");
+}
+```
+
+Correct:
+
+```java
+Student() {
+    this("Unknown");
+}
+```
+
+You cannot do:
+
+```java
+Student() {
+
+    System.out.println("Hello");
+
+    super();
+}
+```
+
+because `super()` must come first.
+
+---
+
+# 12. Easy Mental Model
+
+Imagine inheritance like a family.
+
+```text
+Person
+   ↑
+Student
+   ↑
+CollegeStudent
+```
+
+Then:
+
+```text
+this
+ ↓
+"I am talking about myself."
+
+super
+ ↓
+"I am talking about my parent."
+```
+
+So:
+
+```java
+this.name
+```
+
+means:
+
+> My name.
+
+And:
+
+```java
+super.name
+```
+
+means:
+
+> My parent's name.
+
+---
+
+# Key Takeaways
+
+- `this` refers to the **current object**.
+- `super` refers to the **parent class**.
+- `this()` calls another constructor in the same class.
+- `super()` calls the parent class constructor.
+- `this.variable` accesses the current object's variable.
+- `super.variable` accesses the parent's variable.
+- `this.method()` calls the current class method.
+- `super.method()` calls the parent class method.
+- `this()` and `super()` must be the first statement in a constructor.
+
+---
+
+## One-Line Summary
+
+> **`this` is used to refer to the current object, while `super` is used to access the parent class.**
