@@ -1,0 +1,499 @@
+# Java Enum
+
+An `enum` in Java is used when we have a **fixed set of constant values**.
+
+For example, suppose a student can have only these statuses:
+
+```text
+ACTIVE
+INACTIVE
+GRADUATED
+```
+
+Instead of storing them as random strings, we can use an `enum`.
+
+---
+
+# 1. What is an Enum?
+
+`enum` stands for **enumeration**.
+
+It allows us to define a fixed group of values.
+
+```java
+enum Status {
+    ACTIVE,
+    INACTIVE,
+    GRADUATED
+}
+```
+
+Now `Status` can only represent these defined values.
+
+---
+
+# 2. Using an Enum
+
+```java
+enum Status {
+    ACTIVE,
+    INACTIVE,
+    GRADUATED
+}
+
+class Student {
+
+    String name;
+    Status status;
+}
+```
+
+Create an object:
+
+```java
+Student student = new Student();
+
+student.name = "Nikitha";
+student.status = Status.ACTIVE;
+```
+
+Now:
+
+```java
+System.out.println(student.status);
+```
+
+Output:
+
+```text
+ACTIVE
+```
+
+---
+
+# 3. Why Not Just Use Strings?
+
+We could do:
+
+```java
+String status = "ACTIVE";
+```
+
+But someone could accidentally write:
+
+```java
+status = "Actve";
+```
+
+or:
+
+```java
+status = "Something";
+```
+
+Java won't stop us because they are just strings.
+
+With an enum:
+
+```java
+Status status = Status.ACTIVE;
+```
+
+only the defined values can be used.
+
+```text
+Status
+ ├── ACTIVE
+ ├── INACTIVE
+ └── GRADUATED
+```
+
+This makes the code safer and easier to understand.
+
+---
+
+# 4. Enum with `switch`
+
+Enums work very well with `switch`.
+
+```java
+enum Status {
+    ACTIVE,
+    INACTIVE,
+    GRADUATED
+}
+```
+
+Then:
+
+```java
+Status status = Status.ACTIVE;
+
+switch (status) {
+
+    case ACTIVE:
+        System.out.println("Student is active");
+        break;
+
+    case INACTIVE:
+        System.out.println("Student is inactive");
+        break;
+
+    case GRADUATED:
+        System.out.println("Student has graduated");
+        break;
+}
+```
+
+Output:
+
+```text
+Student is active
+```
+
+---
+
+# 5. Getting All Enum Values
+
+We can use:
+
+```java
+Status.values()
+```
+
+Example:
+
+```java
+for (Status status : Status.values()) {
+    System.out.println(status);
+}
+```
+
+Output:
+
+```text
+ACTIVE
+INACTIVE
+GRADUATED
+```
+
+This is useful when you want to work with every possible enum value.
+
+---
+
+# 6. Getting the Enum Name
+
+Every enum value has a name.
+
+```java
+Status status = Status.ACTIVE;
+
+System.out.println(status.name());
+```
+
+Output:
+
+```text
+ACTIVE
+```
+
+---
+
+# 7. Enum `valueOf()`
+
+We can convert a string into an enum value using `valueOf()`.
+
+```java
+Status status = Status.valueOf("ACTIVE");
+
+System.out.println(status);
+```
+
+Output:
+
+```text
+ACTIVE
+```
+
+The string must match the enum constant exactly.
+
+For example:
+
+```java
+Status.valueOf("active");
+```
+
+is different from:
+
+```java
+Status.valueOf("ACTIVE");
+```
+
+and will throw an exception if `"active"` is not defined.
+
+---
+
+# 8. Enum with Numbers
+
+Every enum constant has an ordinal position.
+
+```java
+enum Level {
+    LOW,
+    MEDIUM,
+    HIGH
+}
+```
+
+We can use:
+
+```java
+System.out.println(Level.LOW.ordinal());
+System.out.println(Level.MEDIUM.ordinal());
+System.out.println(Level.HIGH.ordinal());
+```
+
+Output:
+
+```text
+0
+1
+2
+```
+
+The numbering starts from `0`.
+
+However, don't use `ordinal()` as a permanent database ID because changing the enum order can change the ordinal values.
+
+---
+
+# 9. Enum Can Have Methods
+
+An enum is more powerful than just a list of names.
+
+It can contain methods.
+
+```java
+enum Level {
+
+    LOW,
+    MEDIUM,
+    HIGH;
+
+    void display() {
+        System.out.println("Level: " + this);
+    }
+}
+```
+
+Use it:
+
+```java
+Level.HIGH.display();
+```
+
+Output:
+
+```text
+Level: HIGH
+```
+
+---
+
+# 10. Enum Can Have Variables
+
+An enum can also contain fields.
+
+```java
+enum Level {
+
+    LOW(1),
+    MEDIUM(2),
+    HIGH(3);
+
+    int value;
+
+    Level(int value) {
+        this.value = value;
+    }
+}
+```
+
+Now:
+
+```java
+System.out.println(Level.HIGH.value);
+```
+
+Output:
+
+```text
+3
+```
+
+Here each enum constant has its own value.
+
+```text
+LOW     → 1
+MEDIUM  → 2
+HIGH    → 3
+```
+
+---
+
+# 11. Real-World Example
+
+Enums are useful when a value has a fixed set of possibilities.
+
+### Order status
+
+```java
+enum OrderStatus {
+    PLACED,
+    SHIPPED,
+    DELIVERED,
+    CANCELLED
+}
+```
+
+### User role
+
+```java
+enum Role {
+    ADMIN,
+    USER,
+    MANAGER
+}
+```
+
+### Payment status
+
+```java
+enum PaymentStatus {
+    PENDING,
+    SUCCESS,
+    FAILED
+}
+```
+
+### Days
+
+```java
+enum Day {
+    MONDAY,
+    TUESDAY,
+    WEDNESDAY,
+    THURSDAY,
+    FRIDAY,
+    SATURDAY,
+    SUNDAY
+}
+```
+
+---
+
+# 12. Enum vs String
+
+| String | Enum |
+|---|---|
+| Can contain any text | Fixed set of values |
+| Easy to make spelling mistakes | Safer |
+| No fixed choices | Fixed choices |
+| `"ACTIVE"` and `"active"` are different | Constants are predefined |
+| Less structured | More structured |
+
+---
+
+# 13. Easy Mental Model
+
+Think of an enum as a **menu of allowed choices**.
+
+```text
+OrderStatus
+     │
+     ├── PLACED
+     ├── SHIPPED
+     ├── DELIVERED
+     └── CANCELLED
+```
+
+You cannot randomly add:
+
+```text
+"COOKING"
+```
+
+unless it is defined inside the enum.
+
+---
+
+# 14. Complete Example
+
+```java
+enum PaymentStatus {
+    PENDING,
+    SUCCESS,
+    FAILED
+}
+
+class Payment {
+
+    PaymentStatus status;
+
+    Payment(PaymentStatus status) {
+        this.status = status;
+    }
+
+    void display() {
+
+        switch (status) {
+
+            case PENDING:
+                System.out.println("Payment is pending");
+                break;
+
+            case SUCCESS:
+                System.out.println("Payment successful");
+                break;
+
+            case FAILED:
+                System.out.println("Payment failed");
+                break;
+        }
+    }
+}
+```
+
+Use it:
+
+```java
+Payment payment =
+        new Payment(PaymentStatus.SUCCESS);
+
+payment.display();
+```
+
+Output:
+
+```text
+Payment successful
+```
+
+---
+
+# Key Takeaways
+
+- `enum` represents a **fixed set of values**.
+- Enum constants are predefined.
+- Enums provide more safety than using random strings.
+- Enums work well with `switch`.
+- `values()` returns all enum constants.
+- `valueOf()` converts a matching string into an enum value.
+- Enums can have constructors, fields, and methods.
+- Common uses include statuses, roles, categories, days, and fixed choices.
+
+---
+
+## One-Line Summary
+
+> **An enum is a Java type used to represent a fixed and well-defined set of constant values.**
