@@ -1,0 +1,270 @@
+# Java Reflection API
+
+## 1. What Is Reflection in Java?
+
+**Reflection** is a Java feature that allows a program to inspect information about classes, methods, constructors, and fields at runtime.
+
+Normally, when writing Java code, we know which class and methods we want to use.
+
+With reflection, Java can discover information about a class while the program is running and, when permitted, access or invoke its members dynamically.
+
+**In simple words:** Reflection allows Java to examine a class and interact with its structure at runtime, even when some details are not known in advance.
+
+---
+
+## 2. Why Do We Need Reflection?
+
+Imagine you are building a framework that works with different Java classes.
+
+You cannot manually write separate code for every possible class. Instead, the framework may need to discover:
+
+- Which class it is working with.
+- Which methods the class contains.
+- Which constructors are available.
+- Which annotations are present.
+- Which fields exist.
+
+Reflection makes this possible.
+
+It is commonly used in frameworks, testing tools, dependency injection, serialization, and object-mapping libraries.
+
+---
+
+## 3. Getting Class Information
+
+Java provides the `Class` class to represent information about a class at runtime.
+
+There are three common ways to obtain a `Class` object.
+
+```java
+// Method 1: Using .class
+Class<?> c1 = String.class;
+
+// Method 2: Using an existing object
+String text = "Hello";
+Class<?> c2 = text.getClass();
+
+// Method 3: Using the class name
+Class<?> c3 = Class.forName("java.lang.String");
+```
+
+The third method can throw `ClassNotFoundException` if the class cannot be found.
+
+All three examples refer to the `String` class.
+
+---
+
+## 4. Inspecting Methods Using Reflection
+
+Consider this class:
+
+```java
+class Student {
+    public void study() {
+        System.out.println("Student is studying");
+    }
+
+    public void attendClass() {
+        System.out.println("Student is attending class");
+    }
+}
+```
+
+We can inspect its methods using reflection.
+
+```java
+import java.lang.reflect.Method;
+
+public class Main {
+    public static void main(String[] args) {
+        Class<?> clazz = Student.class;
+
+        Method[] methods = clazz.getDeclaredMethods();
+
+        for (Method method : methods) {
+            System.out.println(method.getName());
+        }
+    }
+}
+```
+
+Possible output:
+
+```text
+study
+attendClass
+```
+
+The order of methods is not guaranteed.
+
+### Understanding the code
+
+- `Student.class` obtains the class information.
+- `getDeclaredMethods()` returns methods declared directly in the class, including methods with different access modifiers.
+- `getName()` returns each method's name.
+
+Unlike `getMethods()`, which returns public methods including inherited public methods, `getDeclaredMethods()` includes non-public methods declared directly in the class but excludes inherited methods.
+
+---
+
+## 5. Calling a Method Using Reflection
+
+Reflection can also invoke a method dynamically.
+
+```java
+import java.lang.reflect.Method;
+
+class Student {
+    public void study() {
+        System.out.println("Student is studying");
+    }
+}
+
+public class Main {
+    public static void main(String[] args) throws Exception {
+        Student student = new Student();
+
+        Method method = Student.class.getMethod("study");
+
+        method.invoke(student);
+    }
+}
+```
+
+Output:
+
+```text
+Student is studying
+```
+
+Here is what happens:
+
+1. We create a `Student` object.
+2. `getMethod("study")` finds the public method named `study`.
+3. `invoke(student)` calls that method on the object.
+
+Reflection is useful when the method to call is determined dynamically rather than being written directly in the source code.
+
+---
+
+## 6. Inspecting Constructors and Fields
+
+Reflection is not limited to methods.
+
+### Inspecting constructors
+
+```java
+import java.lang.reflect.Constructor;
+
+Constructor<?>[] constructors =
+        Student.class.getDeclaredConstructors();
+
+for (Constructor<?> constructor : constructors) {
+    System.out.println(constructor);
+}
+```
+
+This lists the constructors declared by the `Student` class.
+
+### Inspecting fields
+
+```java
+import java.lang.reflect.Field;
+
+Field[] fields = Student.class.getDeclaredFields();
+
+for (Field field : fields) {
+    System.out.println(field.getName());
+}
+```
+
+This displays the names of fields declared directly in the class.
+
+These features help frameworks understand object structures without requiring a manually written description of every class.
+
+---
+
+## 7. How Does Spring Use Reflection?
+
+Frameworks such as Spring use reflection as part of their runtime processing.
+
+For example, consider a Spring-managed class:
+
+```java
+@Component
+class EmailService {
+    public void sendEmail() {
+        System.out.println("Email sent");
+    }
+}
+```
+
+Spring can inspect classes, annotations, and constructors to discover components and help create and manage objects.
+
+Reflection is one part of this process. Spring also uses other mechanisms, including dependency resolution, configuration processing, and proxy generation.
+
+Hibernate similarly uses reflection and related metadata mechanisms to inspect entity classes and work with their properties.
+
+**Important:** You do not need to write reflection code every time you use Spring or Hibernate. These frameworks handle much of that complexity internally.
+
+---
+
+## 8. Reflection vs Normal Java Method Calls
+
+| Feature | Normal Method Call | Reflection |
+|---|---|---|
+| Method selection | Usually explicit in source code | Can be determined at runtime |
+| Syntax | `student.study()` | `method.invoke(student)` |
+| Readability | Usually simpler | More complex |
+| Type checking | Strong compile-time checking for ordinary calls | Some checks happen at runtime |
+| Performance | Generally lower overhead | Can involve additional overhead |
+| Common use | Everyday application logic | Frameworks and dynamic tools |
+
+Modern Java reflection performance depends on the operation and runtime optimizations, so reflection is not necessarily slow in every situation. However, it introduces complexity that ordinary method calls usually avoid.
+
+---
+
+## 9. Limitations and Risks of Reflection
+
+Reflection is powerful, but it should be used carefully.
+
+- **Complexity:** Code becomes harder to understand and maintain.
+- **Runtime errors:** Missing methods, invalid arguments, or access failures may only become apparent at runtime.
+- **Performance:** Reflective operations can introduce overhead.
+- **Encapsulation:** Attempting to access private members can undermine normal access boundaries.
+- **Security and module restrictions:** Modern Java's module system and access rules can prevent certain reflective operations.
+
+For example, `setAccessible(true)` does not guarantee that access to a private member will be permitted. Module boundaries and other restrictions may still apply.
+
+Use reflection when dynamic inspection or invocation is genuinely needed, not as a replacement for ordinary Java programming.
+
+---
+
+## 10. When Should You Use Reflection?
+
+Reflection is useful for:
+
+- Framework development.
+- Dependency injection.
+- Testing frameworks.
+- Serialization and deserialization.
+- Object mapping.
+- Annotation processing at runtime.
+- Tools that inspect unknown classes dynamically.
+
+For everyday application logic, prefer normal method calls, interfaces, and polymorphism whenever possible.
+
+---
+
+## Key Takeaways
+
+- Reflection allows Java programs to inspect classes at runtime.
+- The `Class` class provides access to runtime class information.
+- The Reflection API includes `Method`, `Field`, and `Constructor`.
+- Methods can be invoked dynamically using `Method.invoke()`.
+- Frameworks such as Spring and Hibernate use reflection and related mechanisms.
+- Reflection offers flexibility but introduces complexity and runtime risks.
+
+## One-Line Summary
+
+**Java Reflection allows a program to inspect and interact with classes, methods, fields, and constructors dynamically at runtime.**
