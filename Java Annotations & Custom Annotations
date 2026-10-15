@@ -1,0 +1,317 @@
+# Java Annotations & Custom Annotations
+
+## 1. What Are Annotations in Java?
+
+Annotations are metadata that provide additional information about Java code.
+
+They can be applied to classes, methods, fields, constructors, and other program elements. Depending on the annotation and how it is processed, this information can help the compiler, development tools, or frameworks perform specific tasks.
+
+**In simple words:** Annotations are labels attached to Java code that describe something about it or tell a tool how to handle it.
+
+For example:
+
+```java
+@Override
+public String toString() {
+    return "Student";
+}
+```
+
+Here, `@Override` tells the compiler that the method is intended to override a method inherited from a superclass or interface.
+
+If it does not actually override a valid method, the compiler reports an error.
+
+---
+
+## 2. Why Do We Need Annotations?
+
+Imagine you are developing a large Java application.
+
+You may need to:
+- Tell the compiler that a method overrides another method.
+- Mark methods that should be tested.
+- Tell a framework which classes should be managed.
+- Define how Java objects map to database tables.
+- Attach metadata that your own code can inspect.
+
+Annotations make these intentions explicit and reduce the need for separate configuration in many situations.
+
+---
+
+## 3. Common Built-in Annotations
+
+### `@Override`
+
+Indicates that a method is intended to override an inherited method.
+
+```java
+class Animal {
+    void sound() {
+        System.out.println("Animal sound");
+    }
+}
+
+class Dog extends Animal {
+    @Override
+    void sound() {
+        System.out.println("Bark");
+    }
+}
+```
+
+If you accidentally write `sounds()` instead of `sound()`, the compiler catches the problem because the method does not override the inherited method.
+
+### `@Deprecated`
+
+Marks an API that is discouraged for use, often because a newer alternative exists.
+
+```java
+class Calculator {
+    @Deprecated
+    void oldCalculate() {
+        System.out.println("Old calculation");
+    }
+}
+```
+
+The annotation does not automatically delete or disable the method. It communicates that the method is deprecated.
+
+### `@SuppressWarnings`
+
+Asks the compiler to suppress specified categories of warnings within a particular scope.
+
+```java
+@SuppressWarnings("deprecation")
+void useOldMethod() {
+    // Deprecated API usage
+}
+```
+
+Use it carefully: suppressing a warning does not fix the underlying issue.
+
+---
+
+## 4. What Are Custom Annotations?
+
+Java also allows developers to create their own annotations.
+
+For example, suppose you want to mark certain methods as important for auditing.
+
+You could create a custom annotation called `@Important`.
+
+```java
+@interface Important {
+}
+```
+
+You can then apply it to a method:
+
+```java
+class PaymentService {
+
+    @Important
+    void processPayment() {
+        System.out.println("Payment processed");
+    }
+}
+```
+
+Here, `@Important` is a custom annotation.
+
+However, defining an annotation does not automatically make Java perform an action. Some code, framework, or tool must interpret the annotation if it is supposed to affect behavior.
+
+---
+
+## 5. Understanding `@Retention`
+
+The `@Retention` annotation controls how long an annotation is retained.
+
+Java provides three retention policies.
+
+| Policy | Meaning |
+|---|---|
+| `SOURCE` | Available in source code but discarded by the compiler |
+| `CLASS` | Stored in the compiled class file, but not necessarily available through runtime reflection |
+| `RUNTIME` | Available at runtime through reflection |
+
+For a custom annotation that you want to inspect using reflection, use `RetentionPolicy.RUNTIME`.
+
+```java
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+
+@Retention(RetentionPolicy.RUNTIME)
+@interface Important {
+}
+```
+
+Now Java retains the annotation at runtime, making it available for reflective inspection.
+
+---
+
+## 6. Understanding `@Target`
+
+The `@Target` annotation specifies where a custom annotation can be applied.
+
+For example:
+
+```java
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Target;
+
+@Target(ElementType.METHOD)
+@interface Important {
+}
+```
+
+This annotation can be applied to methods.
+
+Common target types include:
+
+- `ElementType.TYPE` — classes, interfaces, and other type declarations.
+- `ElementType.METHOD` — methods.
+- `ElementType.FIELD` — fields.
+- `ElementType.CONSTRUCTOR` — constructors.
+- `ElementType.PARAMETER` — method or constructor parameters.
+
+You can specify multiple targets if required.
+
+---
+
+## 7. Creating a Useful Custom Annotation
+
+Let's create an annotation that marks a method as requiring an audit.
+
+### Step 1: Define the annotation
+
+```java
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+import java.lang.annotation.ElementType;
+
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD)
+@interface Audit {
+    String value();
+}
+```
+
+Here:
+- `@Retention(RetentionPolicy.RUNTIME)` makes the annotation available at runtime.
+- `@Target(ElementType.METHOD)` restricts its use to methods.
+- `String value()` defines a value that the annotation can store.
+
+### Step 2: Apply the annotation
+
+```java
+class BankService {
+
+    @Audit("Money transfer")
+    public void transferMoney() {
+        System.out.println("Money transferred");
+    }
+}
+```
+
+The annotation now stores the description `"Money transfer"` alongside the method's metadata.
+
+### Step 3: Read the annotation using reflection
+
+```java
+import java.lang.reflect.Method;
+
+public class Main {
+    public static void main(String[] args) throws Exception {
+
+        Method method =
+                BankService.class.getMethod("transferMoney");
+
+        Audit audit = method.getAnnotation(Audit.class);
+
+        if (audit != null) {
+            System.out.println(audit.value());
+        }
+    }
+}
+```
+
+Output:
+
+```text
+Money transfer
+```
+
+This example shows how a program can discover custom annotation metadata at runtime.
+
+**Important:** This code only reads the annotation. It does not automatically record an audit log or perform security checks. You would need to implement that behavior separately.
+
+---
+
+## 8. How Are Annotations Used in Spring Boot?
+
+Annotations are widely used in Spring Boot and Hibernate.
+
+Examples include:
+
+| Annotation | Common purpose |
+|---|---|
+| `@Component` | Marks a class as a Spring-managed component candidate |
+| `@Service` | Indicates a service-layer component |
+| `@Autowired` | Requests dependency injection |
+| `@RestController` | Marks a controller that handles web requests and returns response data |
+| `@Entity` | Marks a class as a JPA entity |
+| `@Id` | Identifies the primary key of an entity |
+
+For example:
+
+```java
+import org.springframework.stereotype.Service;
+
+@Service
+class StudentService {
+
+    public void display() {
+        System.out.println("Student service running");
+    }
+}
+```
+
+Spring processes annotations as part of its framework mechanisms to discover and configure application components.
+
+Hibernate and JPA use annotations such as `@Entity` and `@Id` to describe how Java classes relate to database records.
+
+These annotations do not work simply because Java recognizes their names; the relevant framework must process them.
+
+---
+
+## 9. Annotations vs Comments
+
+| Feature | Annotation | Comment |
+|---|---|---|
+| Example | `@Override` | `// Override this method` |
+| Meaning to tools | Can be processed by compilers or frameworks | Normally ignored by the compiler |
+| Stores structured metadata | Yes | Not as Java annotation metadata |
+| Can influence framework behavior | Yes, when processed | Not directly |
+
+Comments explain code to people. Annotations provide structured metadata that tools and frameworks can interpret.
+
+---
+
+## 10. Important Things to Remember
+
+- Annotations provide metadata about program elements.
+- Built-in annotations include `@Override`, `@Deprecated`, and `@SuppressWarnings`.
+- Developers can define custom annotations using `@interface`.
+- `@Retention` controls how long annotation information is retained.
+- `@Target` controls where an annotation can be applied.
+- Runtime annotations can be inspected through reflection.
+- An annotation alone does not implement behavior; a compiler, tool, or framework must process it.
+
+## Key Takeaways
+
+Annotations make Java code more descriptive and help tools and frameworks understand how classes and methods should be treated. Custom annotations let developers define their own metadata, while reflection or framework processing can turn that metadata into useful behavior.
+
+## One-Line Summary
+
+**Java annotations attach structured metadata to code, allowing compilers, tools, and frameworks to inspect it and act on it when configured to do so.**
