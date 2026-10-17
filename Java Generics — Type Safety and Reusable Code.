@@ -1,0 +1,372 @@
+# Java Generics: Type Safety and Reusable Code
+
+## 1. What Are Generics in Java?
+
+**Generics allow classes, interfaces, and methods to work with different data types while maintaining type safety.**
+
+Without generics, you might write separate classes to store integers, strings, and other objects. Alternatively, you might use `Object`, but then you often need explicit type casting.
+
+Generics let you write reusable code that specifies which types it accepts.
+
+**In simple words:** Generics allow you to write code once and safely reuse it with different data types.
+
+---
+
+## 2. Why Do We Need Generics?
+
+Imagine creating a list of student marks.
+
+Without generics:
+
+```java
+import java.util.ArrayList;
+
+ArrayList marks = new ArrayList();
+
+marks.add(90);
+marks.add(85);
+marks.add("Hello");
+
+int score = (int) marks.get(0);
+```
+
+This code allows different types of objects to enter the same list. If you accidentally retrieve an element using an incompatible type, you can encounter a runtime error.
+
+With generics:
+
+```java
+import java.util.ArrayList;
+
+ArrayList<Integer> marks = new ArrayList<>();
+
+marks.add(90);
+marks.add(85);
+
+// marks.add("Hello"); // Compile-time error
+
+int score = marks.get(0);
+```
+
+Now the list accepts `Integer` values, and Java checks type compatibility at compile time.
+
+Benefits include:
+
+- Better type safety.
+- Fewer explicit casts.
+- Errors caught earlier.
+- Reusable classes and methods.
+- More readable code.
+
+---
+
+## 3. Understanding the Syntax
+
+Consider:
+
+```java
+ArrayList<String> names = new ArrayList<>();
+```
+
+Here:
+
+- `ArrayList` is the collection class.
+- `String` is the type parameter supplied to it.
+- `<String>` means this list is intended to store strings.
+- `new ArrayList<>()` creates the object, with the compiler inferring the type argument.
+
+The diamond operator `<>` allows Java to infer the type from the declaration.
+
+Remember that Java generics work with reference types, not primitive types. Use `Integer` instead of `int`, `Double` instead of `double`, and so on.
+
+---
+
+## 4. Creating a Generic Class
+
+You can create your own generic classes.
+
+```java
+class Box<T> {
+    private T value;
+
+    public void setValue(T value) {
+        this.value = value;
+    }
+
+    public T getValue() {
+        return value;
+    }
+}
+```
+
+Here, `T` is a type parameter. It acts as a placeholder for a type supplied when creating the object.
+
+Use the class like this:
+
+```java
+public class Main {
+    public static void main(String[] args) {
+        Box<Integer> numberBox = new Box<>();
+        numberBox.setValue(100);
+
+        Box<String> textBox = new Box<>();
+        textBox.setValue("Hello Java");
+
+        System.out.println(numberBox.getValue());
+        System.out.println(textBox.getValue());
+    }
+}
+```
+
+Output:
+
+```text
+100
+Hello Java
+```
+
+The same `Box` class works with different types without needing separate `IntegerBox` and `StringBox` classes.
+
+---
+
+## 5. Understanding Generic Type Parameters
+
+Java developers commonly use these letters by convention:
+
+| Symbol | Common meaning |
+|---|---|
+| `T` | Type |
+| `E` | Element |
+| `K` | Key |
+| `V` | Value |
+| `N` | Number |
+
+These are naming conventions, not special Java keywords. You can use other valid identifiers.
+
+For example, `Map<K, V>` represents a structure with key and value types.
+
+```java
+import java.util.HashMap;
+import java.util.Map;
+
+Map<Integer, String> students = new HashMap<>();
+
+students.put(101, "Aarav");
+students.put(102, "Meera");
+
+System.out.println(students.get(101));
+```
+
+Output:
+
+```text
+Aarav
+```
+
+Here, keys must be integers and values must be strings.
+
+---
+
+## 6. Creating a Generic Method
+
+A method can also declare its own type parameter.
+
+```java
+public class Main {
+
+    public static <T> void display(T value) {
+        System.out.println(value);
+    }
+
+    public static void main(String[] args) {
+        display(100);
+        display("Hello");
+        display(25.5);
+    }
+}
+```
+
+Output:
+
+```text
+100
+Hello
+25.5
+```
+
+In `public static <T> void display(T value)`, the `<T>` declares the method's type parameter before the return type.
+
+Java infers the appropriate type from the argument in each call.
+
+Generic methods are useful when the same operation can work with different types.
+
+---
+
+## 7. What Are Bounded Type Parameters?
+
+Sometimes, you want a generic method or class to accept only certain types.
+
+For example, suppose a method should accept numeric values only.
+
+You can use `extends` to define an upper bound:
+
+```java
+public class Main {
+
+    public static <T extends Number> void showNumber(T value) {
+        System.out.println(value);
+    }
+
+    public static void main(String[] args) {
+        showNumber(100);
+        showNumber(25.5);
+    }
+}
+```
+
+This accepts types such as `Integer`, `Double`, and `Float` because they extend `Number`.
+
+A call such as `showNumber("Hello")` would fail to compile because `String` is not a subtype of `Number`.
+
+Despite the keyword `extends`, the bound can also be an interface:
+
+```java
+<T extends Comparable<T>>
+```
+
+This constrains `T` to types compatible with `Comparable<T>`.
+
+---
+
+## 8. What Is the Wildcard `?`?
+
+The wildcard `?` represents an unknown type.
+
+For example:
+
+```java
+import java.util.List;
+
+public class Main {
+
+    public static void display(List<?> values) {
+        for (Object value : values) {
+            System.out.println(value);
+        }
+    }
+}
+```
+
+This method can accept lists such as `List<String>`, `List<Integer>`, and `List<Double>`.
+
+A wildcard is useful when a method needs to work with a generic type without needing to know exactly what that type is.
+
+### Upper-bounded wildcard
+
+```java
+List<? extends Number>
+```
+
+This accepts a list whose element type is `Number` or a subtype of `Number`.
+
+It is useful when reading numeric values from lists. Adding arbitrary numeric values is generally not permitted because the exact element type is unknown.
+
+### Lower-bounded wildcard
+
+```java
+List<? super Integer>
+```
+
+This accepts a list whose element type is `Integer` or a supertype of `Integer`, such as `Number` or `Object`.
+
+It is useful when adding integer values to a list.
+
+A common guideline is **PECS**:
+
+- **Producer Extends:** Use `extends` when a structure primarily supplies values to your code.
+- **Consumer Super:** Use `super` when a structure primarily receives values from your code.
+
+---
+
+## 9. What Is Type Erasure?
+
+Java generics are mostly implemented through a mechanism called **type erasure**.
+
+At compile time, Java checks generic types. During compilation, generic type information is largely erased from the executable representation, with some metadata retained in class files.
+
+For example:
+
+```java
+List<String> names = new ArrayList<>();
+```
+
+and
+
+```java
+List<Integer> numbers = new ArrayList<>();
+```
+
+Both use the same underlying `ArrayList` class at runtime.
+
+This has several consequences:
+
+- You cannot normally write `new T()` inside a generic class.
+- You cannot create an array directly using a type parameter, such as `new T[10]`.
+- You cannot use primitive types directly as generic type arguments.
+- You cannot overload methods solely by changing generic type arguments when their erased signatures are identical.
+
+Type erasure helps Java maintain compatibility with older Java code.
+
+---
+
+## 10. Generics vs Using `Object`
+
+| Feature | Using `Object` | Using Generics |
+|---|---|---|
+| Type safety | Often requires runtime checks and casts | Checks type compatibility at compile time |
+| Explicit casting | Frequently needed | Often unnecessary |
+| Reusability | Yes | Yes |
+| Type clarity | Less specific | More explicit |
+| Incorrect element types | May be accepted until runtime | Usually rejected at compile time |
+
+Generics are generally the better choice when a class or method is designed to work with specific types.
+
+---
+
+## 11. Where Are Generics Used in Real Projects?
+
+Generics are used throughout Java development:
+
+- Collections such as `List<String>` and `Map<Integer, String>`.
+- Reusable utility methods.
+- Repository interfaces in Spring Data.
+- Type-safe API response wrappers.
+- Data structures such as stacks, queues, and trees.
+- Methods that process different types of input.
+
+For example, Spring Data repositories often look like this:
+
+```java
+public interface StudentRepository
+        extends JpaRepository<Student, Long> {
+}
+```
+
+Here, `Student` represents the entity type and `Long` represents the type of its identifier.
+
+The framework uses this type information to provide a reusable repository API.
+
+---
+
+## Key Takeaways
+
+- Generics allow reusable, type-safe Java code.
+- Generic classes use type parameters such as `<T>`.
+- Generic methods declare their own type parameters.
+- Bounded parameters restrict the types that can be supplied.
+- Wildcards allow flexible handling of generic types.
+- Type erasure explains several limitations of generics.
+- Collections and frameworks such as Spring Data use generics extensively.
+
+## One-Line Summary
+
+**Java generics make reusable code safer by allowing classes, interfaces, and methods to work with specified types while catching many type errors at compile time.**
