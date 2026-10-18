@@ -1,0 +1,284 @@
+# Java Concurrency: Race Conditions, Synchronization & Thread Safety
+
+## 1. What Is Concurrency in Java?
+
+Concurrency means managing multiple tasks that make progress during overlapping periods of time.
+
+In Java, multiple threads can execute tasks within the same application. This can improve responsiveness and help applications handle work efficiently.
+
+However, when multiple threads access and modify shared data, unexpected results can occur.
+
+**In simple words:** Concurrency allows multiple tasks to make progress, but shared data must be handled carefully to avoid incorrect results.
+
+---
+
+## 2. What Is a Thread?
+
+A thread is an independent path of execution within a program.
+
+For example, an application might use different threads to:
+- Handle user requests.
+- Process background tasks.
+- Read files.
+- Perform calculations.
+- Communicate with external services.
+
+A simple Java thread example:
+
+```java
+public class Main {
+    public static void main(String[] args) {
+        Thread thread = new Thread(() -> {
+            System.out.println("Background task running");
+        });
+
+        thread.start();
+
+        System.out.println("Main thread running");
+    }
+}
+```
+
+The output order can vary because the main thread and the new thread may execute in different orders.
+
+**Important:** Calling `start()` starts a new thread. Calling `run()` directly simply executes the method on the current thread.
+
+---
+
+## 3. What Is a Race Condition?
+
+A race condition occurs when the correctness of a program depends on the timing or ordering of concurrent operations.
+
+Consider a shared counter:
+
+```java
+class Counter {
+    int count = 0;
+
+    void increment() {
+        count++;
+    }
+}
+```
+
+At first glance, `count++` looks like one operation. In reality, it involves reading the value, calculating a new value, and writing it back.
+
+Suppose two threads increment the counter when its value is `0`.
+
+1. Thread A reads `0`.
+2. Thread B reads `0`.
+3. Thread A calculates `1` and writes it.
+4. Thread B calculates `1` and writes it.
+
+The final value becomes `1`, even though two increments were attempted.
+
+This is called a **lost update**.
+
+The exact interleaving shown is one possible scenario, not something that must happen every time.
+
+---
+
+## 4. What Is Thread Safety?
+
+A class or operation is thread-safe when it behaves correctly under the concurrent usage it is designed to support.
+
+If multiple threads can modify the same shared data, the code must use suitable concurrency mechanisms to protect its correctness.
+
+Common approaches include:
+
+- Synchronization.
+- Atomic classes.
+- Locks.
+- Immutable objects.
+- Thread confinement, where data is restricted to one thread.
+
+Thread safety is especially important in banking applications, inventory systems, booking systems, and server-side applications.
+
+---
+
+## 5. What Is `synchronized` in Java?
+
+The `synchronized` keyword allows a thread to acquire a monitor lock before executing a synchronized method or block.
+
+For the same object monitor, only one thread at a time can execute code protected by that lock.
+
+Let's fix the counter example:
+
+```java
+class Counter {
+    private int count = 0;
+
+    public synchronized void increment() {
+        count++;
+    }
+
+    public synchronized int getCount() {
+        return count;
+    }
+}
+```
+
+Now, if multiple threads call `increment()` on the same `Counter` instance, the synchronized method prevents them from executing that method concurrently.
+
+The `getCount()` method is also synchronized so that reading the counter uses the same monitor.
+
+**Important:** Synchronization works only when the competing operations use the appropriate shared lock. Synchronizing unrelated objects does not protect the same data.
+
+---
+
+## 6. What Is an Atomic Variable?
+
+Java provides atomic classes in the `java.util.concurrent.atomic` package.
+
+For simple counters, `AtomicInteger` is often a convenient alternative to synchronization.
+
+```java
+import java.util.concurrent.atomic.AtomicInteger;
+
+class Counter {
+    private final AtomicInteger count = new AtomicInteger(0);
+
+    public void increment() {
+        count.incrementAndGet();
+    }
+
+    public int getCount() {
+        return count.get();
+    }
+}
+```
+
+`incrementAndGet()` atomically increments the value and returns the updated result.
+
+Atomic classes are useful for individual thread-safe operations on values. They do not automatically make a larger sequence of multiple operations atomic.
+
+For example, checking a balance and then separately withdrawing money may require stronger coordination than using an atomic number alone.
+
+---
+
+## 7. `synchronized` vs `AtomicInteger`
+
+| Feature | `synchronized` | `AtomicInteger` |
+|---|---|---|
+| Main purpose | Protects a critical section | Provides atomic operations on an integer |
+| Can protect multiple statements together | Yes | Not automatically |
+| Uses monitor locking | Yes | Uses atomic operations supported by the Java runtime |
+| Useful for | Coordinating access to shared state | Counters and individual atomic updates |
+| Complexity | Can coordinate more complex operations | Convenient for simple numeric updates |
+
+Neither approach is universally better. Choose based on the operation that needs to be made thread-safe.
+
+---
+
+## 8. What Is the `volatile` Keyword?
+
+The `volatile` keyword provides visibility guarantees for a variable across threads.
+
+When one thread writes to a volatile variable, other threads that subsequently read that variable are guaranteed to observe the relevant volatile write under Java's memory model.
+
+Example:
+
+```java
+class Task {
+    private volatile boolean running = true;
+
+    public void stop() {
+        running = false;
+    }
+
+    public void work() {
+        while (running) {
+            // Perform work
+        }
+    }
+}
+```
+
+Here, `volatile` helps ensure that a thread checking `running` observes updates made by another thread.
+
+However, `volatile` does **not** make compound operations such as `count++` atomic.
+
+Use `volatile` for suitable visibility and ordering requirements, not as a universal replacement for synchronization.
+
+---
+
+## 9. What Is Deadlock?
+
+A deadlock occurs when threads wait indefinitely for resources held by one another.
+
+Imagine:
+- Thread A holds Lock 1 and waits for Lock 2.
+- Thread B holds Lock 2 and waits for Lock 1.
+
+Neither thread can proceed.
+
+Conceptually:
+
+```text
+Thread A holds Lock 1
+        |
+        v
+Waits for Lock 2
+        |
+        X
+Thread B holds Lock 2
+        |
+        v
+Waits for Lock 1
+```
+
+Ways to reduce deadlock risk include:
+
+- Acquiring locks in a consistent order.
+- Avoiding unnecessary nested locking.
+- Keeping critical sections small.
+- Using timed lock attempts where appropriate.
+
+Deadlocks are different from race conditions: race conditions can produce incorrect results, while deadlocks prevent affected tasks from making progress.
+
+---
+
+## 10. Concurrency vs Parallelism
+
+These terms are related but different.
+
+**Concurrency:** Multiple tasks make progress during overlapping periods. Their execution may be interleaved on one processor or spread across multiple processors.
+
+**Parallelism:** Multiple tasks execute at the same time, typically on different processing cores.
+
+A program can be concurrent without executing tasks in parallel.
+
+---
+
+## 11. A Real-World Example: Ticket Booking
+
+Imagine two users trying to book the last available ticket.
+
+The available ticket count is `1`.
+
+Without proper coordination:
+1. Request A checks that one ticket is available.
+2. Request B checks that one ticket is available.
+3. Both requests proceed with the booking.
+4. The system may oversell the ticket.
+
+A thread-safe design must make checking availability and reserving the ticket a coordinated operation.
+
+In a real application, this might require a database transaction, row locking, or an atomic conditional update. Java synchronization alone cannot coordinate separate application servers or replace database-level consistency controls.
+
+---
+
+## Key Takeaways
+
+- Threads allow tasks to execute concurrently.
+- Race conditions occur when timing affects correctness.
+- Thread safety protects shared data under concurrent access.
+- `synchronized` protects critical sections using monitor locks.
+- Atomic classes provide thread-safe operations on individual values.
+- `volatile` provides visibility guarantees but does not make compound operations atomic.
+- Deadlocks occur when threads wait indefinitely for resources.
+- Concurrency and parallelism are related but distinct concepts.
+
+## One-Line Summary
+
+**Java concurrency enables multiple tasks to make progress, while synchronization, atomic operations, and proper coordination help keep shared data correct and thread-safe.**
