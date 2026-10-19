@@ -1,0 +1,309 @@
+# Java `==` vs `equals()`
+
+## 1. Introduction
+
+In Java, `==` and `equals()` are used to compare values, but they do not always compare the same thing.
+
+- `==` compares primitive values directly. For reference variables, it checks whether both references point to the same object.
+- `equals()` is a method used to compare objects. Its behavior depends on how the class implements it.
+
+**In simple words:** `==` checks reference identity for objects, while `equals()` can check whether two objects have equivalent content.
+
+---
+
+## 2. Using `==` with Primitive Types
+
+For primitive data types such as `int`, `char`, `double`, and `boolean`, `==` compares their values.
+
+```java
+public class Main {
+    public static void main(String[] args) {
+        int a = 10;
+        int b = 10;
+
+        System.out.println(a == b);
+    }
+}
+```
+
+Output:
+
+```text
+true
+```
+
+Both variables contain the value `10`, so the result is `true`.
+
+Another example:
+
+```java
+int a = 10;
+int b = 20;
+
+System.out.println(a == b);
+```
+
+Output:
+
+```text
+false
+```
+
+The values are different.
+
+---
+
+## 3. Using `==` with Objects
+
+For objects, `==` checks whether two references identify the exact same object.
+
+```java
+class Student {
+    String name;
+
+    Student(String name) {
+        this.name = name;
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        Student s1 = new Student("Nikki");
+        Student s2 = new Student("Nikki");
+
+        System.out.println(s1 == s2);
+    }
+}
+```
+
+Output:
+
+```text
+false
+```
+
+Why?
+
+Even though both students have the same name, `new Student()` creates two different objects.
+
+The references `s1` and `s2` point to different objects.
+
+---
+
+## 4. Using `equals()` with Strings
+
+The `String` class overrides `equals()` to compare the contents of strings.
+
+```java
+public class Main {
+    public static void main(String[] args) {
+        String s1 = new String("Java");
+        String s2 = new String("Java");
+
+        System.out.println(s1 == s2);
+        System.out.println(s1.equals(s2));
+    }
+}
+```
+
+Output:
+
+```text
+false
+true
+```
+
+Explanation:
+
+- `s1 == s2` is `false` because the references point to different objects.
+- `s1.equals(s2)` is `true` because both strings contain the same text.
+
+This is why `.equals()` is generally used when comparing string content.
+
+---
+
+## 5. What Happens If a Class Does Not Override `equals()`?
+
+By default, the `equals()` implementation inherited from `Object` compares object identity, much like `==`.
+
+Consider the earlier `Student` class:
+
+```java
+Student s1 = new Student("Nikki");
+Student s2 = new Student("Nikki");
+
+System.out.println(s1.equals(s2));
+```
+
+Output:
+
+```text
+false
+```
+
+Although both objects contain the same name, `Student` has not defined its own content-based equality.
+
+If you want two students to be considered equal based on their names, you must implement that rule yourself or use an appropriate approach such as a Java record.
+
+---
+
+## 6. Overriding `equals()` in a Class
+
+Here is a simple example:
+
+```java
+import java.util.Objects;
+
+class Student {
+    String name;
+
+    Student(String name) {
+        this.name = name;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+
+        if (!(obj instanceof Student)) {
+            return false;
+        }
+
+        Student other = (Student) obj;
+        return Objects.equals(this.name, other.name);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name);
+    }
+}
+```
+
+Now test it:
+
+```java
+public class Main {
+    public static void main(String[] args) {
+        Student s1 = new Student("Nikki");
+        Student s2 = new Student("Nikki");
+
+        System.out.println(s1 == s2);
+        System.out.println(s1.equals(s2));
+    }
+}
+```
+
+Output:
+
+```text
+false
+true
+```
+
+The overridden `equals()` defines two students as equal when their names match.
+
+We also override `hashCode()` because Java requires equal objects to have the same hash code. This is important when using objects in collections such as `HashSet` and `HashMap`.
+
+---
+
+## 7. The String Pool Confusion
+
+Consider this example:
+
+```java
+String s1 = "Java";
+String s2 = "Java";
+
+System.out.println(s1 == s2);
+System.out.println(s1.equals(s2));
+```
+
+Output:
+
+```text
+true
+true
+```
+
+Why does `==` return `true` here?
+
+Java maintains a pool of string literals. Identical string literals can refer to the same pooled `String` object.
+
+Now compare:
+
+```java
+String s1 = new String("Java");
+String s2 = new String("Java");
+
+System.out.println(s1 == s2);
+System.out.println(s1.equals(s2));
+```
+
+Output:
+
+```text
+false
+true
+```
+
+The `new` expressions create distinct objects, even though their contents match.
+
+**Important:** Do not rely on `==` to compare string contents. Use `.equals()`.
+
+---
+
+## 8. Comparison Table
+
+| Feature | `==` | `equals()` |
+|---|---|---|
+| Type | Operator | Method |
+| Primitive values | Compares values | Not available directly for primitives |
+| Object references | Checks object identity | Uses the class's equality implementation |
+| Can compare string content? | Not reliably | Yes, for `String` |
+| Can be customized? | No | Yes, by overriding the method |
+
+---
+
+## 9. Common Mistakes
+
+### Mistake 1: Comparing strings using `==`
+
+```java
+String name = new String("Nikki");
+
+System.out.println(name == "Nikki");
+```
+
+This prints `false` because the two references identify different objects.
+
+Use:
+
+```java
+System.out.println(name.equals("Nikki"));
+```
+
+### Mistake 2: Assuming `equals()` always compares content
+
+It depends on the class. A class that does not override `equals()` inherits identity-based behavior from `Object`.
+
+### Mistake 3: Overriding `equals()` but not `hashCode()`
+
+If two objects are equal according to `equals()`, their hash codes must match. Otherwise, hash-based collections may behave unexpectedly.
+
+---
+
+## Key Takeaways
+
+- `==` compares primitive values or object identity, depending on the operands.
+- `equals()` compares objects according to the implementation provided by their class.
+- The `String` class overrides `equals()` to compare text content.
+- A custom class must define its own equality rules if content-based comparison is needed.
+- When overriding `equals()`, also override `hashCode()` consistently.
+- Use `.equals()` when you want to compare string contents.
+
+## One-Line Summary
+
+**In Java, `==` checks primitive value equality or object identity, while `equals()` checks object equality according to the class's implementation.**
