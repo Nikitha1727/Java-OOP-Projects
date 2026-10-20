@@ -1,0 +1,317 @@
+# Java Optional — Handling Missing Values Without Null Checks
+
+## 1. What Is `Optional` in Java?
+
+In Java, a variable may contain a value or it may contain `null`, meaning no object is available.
+
+If we try to use a method on a `null` reference, Java can throw a `NullPointerException`.
+
+Java introduced `Optional` in Java 8 to represent a value that **may or may not be present**.
+
+Think of `Optional` as a box:
+- The box contains a value.
+- Or the box is empty.
+
+Instead of immediately working with a potentially missing value, we can check whether it exists and decide what to do.
+
+## 2. Why Do We Need Optional?
+
+Consider this example:
+
+```java
+String name = null;
+
+System.out.println(name.length());
+```
+
+This throws a `NullPointerException` because `name` is `null`.
+
+We could check for `null` manually, but repeated null checks can make code harder to read.
+
+With `Optional`, we can express the possibility of a missing value more clearly.
+
+## 3. Creating an Optional
+
+Java provides three common ways to create an `Optional`.
+
+### `Optional.of()`
+
+Use it when the value is definitely not `null`.
+
+```java
+Optional<String> name = Optional.of("Nikitha");
+
+System.out.println(name.get());
+```
+
+Output:
+
+```text
+Nikitha
+```
+
+**Important:** `Optional.of(null)` throws a `NullPointerException`.
+
+### `Optional.ofNullable()`
+
+Use it when the value might be `null`.
+
+```java
+String name = null;
+
+Optional<String> result = Optional.ofNullable(name);
+
+System.out.println(result);
+```
+
+Output:
+
+```text
+Optional.empty
+```
+
+If `name` had contained `"Nikitha"`, the `Optional` would contain that value instead.
+
+### `Optional.empty()`
+
+Use it to create an empty `Optional`.
+
+```java
+Optional<String> name = Optional.empty();
+
+System.out.println(name.isPresent());
+```
+
+Output:
+
+```text
+false
+```
+
+## 4. Important Optional Methods
+
+| Method | What it does |
+|---|---|
+| `of(value)` | Creates an Optional for a non-null value |
+| `ofNullable(value)` | Creates an Optional that may be empty |
+| `empty()` | Creates an empty Optional |
+| `isPresent()` | Returns `true` if a value exists |
+| `ifPresent()` | Executes an action if a value exists |
+| `orElse()` | Returns the value or a default value |
+| `orElseGet()` | Gets a default value from a supplier if empty |
+| `orElseThrow()` | Returns the value or throws an exception |
+| `map()` | Transforms the value if present |
+| `filter()` | Keeps the value only if it matches a condition |
+
+## 5. Checking Whether a Value Exists
+
+You can use `isPresent()` to check whether the Optional contains a value.
+
+```java
+import java.util.Optional;
+
+public class Main {
+    public static void main(String[] args) {
+        Optional<String> name = Optional.ofNullable("Nikitha");
+
+        if (name.isPresent()) {
+            System.out.println(name.get());
+        }
+    }
+}
+```
+
+Output:
+
+```text
+Nikitha
+```
+
+Although this works, `ifPresent()` can be more concise when you simply want to perform an action.
+
+```java
+name.ifPresent(value -> System.out.println(value));
+```
+
+If the Optional is empty, nothing is printed.
+
+## 6. Using `orElse()` for Default Values
+
+Suppose a user's nickname may be missing. We can provide a default value.
+
+```java
+Optional<String> nickname = Optional.empty();
+
+String result = nickname.orElse("Guest");
+
+System.out.println(result);
+```
+
+Output:
+
+```text
+Guest
+```
+
+If the Optional contains a value, that value is returned instead.
+
+### `orElse()` vs `orElseGet()`
+
+```java
+String name = nickname.orElse("Guest");
+```
+
+```java
+String name = nickname.orElseGet(() -> "Guest");
+```
+
+Both return `"Guest"` when the Optional is empty. However, `orElse()` evaluates its default argument immediately, while `orElseGet()` evaluates its supplier only when needed.
+
+This difference matters when generating the default value involves an expensive operation.
+
+## 7. Transforming Values With `map()`
+
+Suppose we have a username and want to convert it to uppercase only if it exists.
+
+```java
+Optional<String> name = Optional.ofNullable("nikitha");
+
+Optional<String> result = name.map(String::toUpperCase);
+
+System.out.println(result);
+```
+
+Output:
+
+```text
+Optional[NIKITHA]
+```
+
+If the original Optional is empty, `map()` does not call the transformation function and the result remains empty.
+
+## 8. Filtering Values With `filter()`
+
+Suppose we want to accept a username only if it has at least five characters.
+
+```java
+Optional<String> name = Optional.of("Nikki");
+
+Optional<String> result =
+        name.filter(value -> value.length() >= 5);
+
+System.out.println(result);
+```
+
+Output:
+
+```text
+Optional[Nikki]
+```
+
+If the username has fewer than five characters, the result is `Optional.empty()`.
+
+## 9. A Real-World Example: Finding a User
+
+Imagine an application that searches for a user by their ID. The user might not exist in the database.
+
+A method can return an `Optional<User>` to communicate that possibility.
+
+```java
+import java.util.Optional;
+
+class User {
+    private final String name;
+
+    User(String name) {
+        this.name = name;
+    }
+
+    String getName() {
+        return name;
+    }
+}
+
+public class Main {
+    static Optional<User> findUser(int id) {
+        if (id == 1) {
+            return Optional.of(new User("Nikitha"));
+        }
+
+        return Optional.empty();
+    }
+
+    public static void main(String[] args) {
+        Optional<User> user = findUser(1);
+
+        String name = user
+                .map(User::getName)
+                .orElse("User not found");
+
+        System.out.println(name);
+    }
+}
+```
+
+Output:
+
+```text
+Nikitha
+```
+
+For an ID other than `1`, the output would be:
+
+```text
+User not found
+```
+
+This example simulates a search; it does not connect to an actual database.
+
+## 10. Common Mistakes to Avoid
+
+**Mistake 1: Using `Optional.of()` with a nullable value**
+
+```java
+Optional<String> name = Optional.of(null);
+```
+
+This throws a `NullPointerException`. Use `ofNullable()` if the value may be `null`.
+
+**Mistake 2: Calling `get()` without checking**
+
+```java
+Optional<String> name = Optional.empty();
+
+System.out.println(name.get());
+```
+
+This throws `NoSuchElementException` because the Optional is empty. Prefer methods such as `orElse()`, `orElseGet()`, or `orElseThrow()`.
+
+**Mistake 3: Using Optional everywhere**
+
+`Optional` is most useful as a return type when a method may have no result. It is generally not intended as a replacement for every nullable field, method parameter, or local variable.
+
+**Mistake 4: Confusing an empty Optional with a null Optional**
+
+```java
+Optional<String> name = Optional.empty();
+```
+
+This is an empty Optional, not `null`.
+
+Avoid assigning `null` to an Optional variable itself.
+
+## 11. Key Takeaways
+
+- `Optional` was introduced in Java 8.
+- It represents a value that may or may not exist.
+- `of()` expects a non-null value.
+- `ofNullable()` accepts a potentially null value.
+- `empty()` creates an Optional without a value.
+- `orElse()` provides a fallback value.
+- `map()` transforms a value when present.
+- `filter()` keeps a value only when a condition matches.
+- `Optional` can make APIs clearer, but it does not eliminate every possible `NullPointerException`.
+
+## One-Line Summary
+
+**Java Optional is a container that represents a value that may be missing, helping developers handle absent results more explicitly and safely.**
