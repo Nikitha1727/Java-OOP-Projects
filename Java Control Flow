@@ -1,0 +1,205 @@
+# Java Control Flow: `break` vs `continue` vs `return`
+
+## 1. Introduction
+
+In Java, programs usually execute statements from top to bottom. But sometimes, we need to change the normal flow of execution.
+
+Java provides three keywords for this:
+
+- `break` — stops a loop or exits a `switch` statement.
+- `continue` — skips the current loop iteration and moves to the next one.
+- `return` — exits the current method and can send a value back to the caller.
+
+Although these keywords may look similar, **each one changes program execution differently.**
+
+## 2. Understanding `break`
+
+The `break` statement immediately terminates the nearest enclosing loop or exits a `switch` statement.
+
+### Example
+
+```java
+public class Main {
+    public static void main(String[] args) {
+        for (int i = 1; i <= 5; i++) {
+            if (i == 3) {
+                break;
+            }
+
+            System.out.println(i);
+        }
+    }
+}
+```
+
+**Output:**
+
+```text
+1
+2
+```
+
+### How does it work?
+
+1. The loop starts with `i = 1`.
+2. It prints `1`, then `2`.
+3. When `i` becomes `3`, the condition is true.
+4. `break` terminates the loop immediately.
+
+The values `3`, `4`, and `5` are never printed.
+
+**Real-world example:** Stop searching when the required item is found.
+
+## 3. Understanding `continue`
+
+The `continue` statement skips the remaining statements in the current loop iteration and moves to the next iteration.
+
+### Example
+
+```java
+public class Main {
+    public static void main(String[] args) {
+        for (int i = 1; i <= 5; i++) {
+            if (i == 3) {
+                continue;
+            }
+
+            System.out.println(i);
+        }
+    }
+}
+```
+
+**Output:**
+
+```text
+1
+2
+4
+5
+```
+
+### How does it work?
+
+When `i` becomes `3`, `continue` skips the `println()` statement for that iteration.
+
+The loop does not stop. It continues with `i = 4` and `i = 5`.
+
+**Real-world example:** Skip invalid records while processing a list of records.
+
+## 4. Understanding `return`
+
+The `return` statement immediately exits the current method. A method can return a value, or it can use `return;` without a value if its return type is `void`.
+
+### Example 1: Returning a value
+
+```java
+public class Main {
+    static int add(int a, int b) {
+        return a + b;
+    }
+
+    public static void main(String[] args) {
+        int result = add(10, 20);
+        System.out.println(result);
+    }
+}
+```
+
+**Output:**
+
+```text
+30
+```
+
+The `add()` method calculates the sum and returns it to the calling code.
+
+### Example 2: Exiting a method early
+
+```java
+public class Main {
+    static void checkAge(int age) {
+        if (age < 18) {
+            System.out.println("Not eligible");
+            return;
+        }
+
+        System.out.println("Eligible");
+    }
+
+    public static void main(String[] args) {
+        checkAge(16);
+        checkAge(20);
+    }
+}
+```
+
+**Output:**
+
+```text
+Not eligible
+Eligible
+```
+
+When the age is `16`, `return` exits `checkAge()` immediately. When the age is `20`, execution continues to the second print statement.
+
+## 5. Difference Between `break`, `continue`, and `return`
+
+| Feature | `break` | `continue` | `return` |
+|---|---|---|---|
+| Main purpose | Stop a loop | Skip an iteration | Exit a method |
+| Does the loop continue? | No | Yes, if the loop has more iterations | The current method exits |
+| Can return a value? | No | No | Yes, for methods with a non-`void` return type |
+| Common use | Stop when a condition is met | Skip unwanted items | Finish a method or provide a result |
+
+## 6. Can We Use Them Together?
+
+Yes. Different control-flow statements can be used in the same program.
+
+```java
+public class Main {
+    public static void main(String[] args) {
+        for (int i = 1; i <= 10; i++) {
+            if (i == 3) {
+                continue;
+            }
+
+            if (i == 7) {
+                break;
+            }
+
+            System.out.println(i);
+        }
+    }
+}
+```
+
+**Output:**
+
+```text
+1
+2
+4
+5
+6
+```
+
+Here, `continue` skips `3`, while `break` stops the loop when `i` reaches `7`.
+
+## 7. Common Mistakes
+
+- **Using `break` when you only want to skip one value:** This terminates the entire loop instead.
+- **Expecting `continue` to stop a loop:** It only skips the current iteration.
+- **Writing statements after `return` and expecting them to execute:** They will not execute if the `return` statement has already been reached.
+- **Forgetting the return value:** A method declared with a non-`void` return type must return an appropriate value on every possible path where it completes normally.
+
+## 8. Key Takeaways
+
+- Use `break` when you want to stop a loop or exit a `switch`.
+- Use `continue` when you want to skip the current loop iteration.
+- Use `return` when you want to exit a method, optionally returning a result.
+- Understanding these keywords makes loops and methods easier to read, debug, and write correctly.
+
+## One-Line Summary
+
+**`break` stops a loop, `continue` skips an iteration, and `return` exits a method.**
