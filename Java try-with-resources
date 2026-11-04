@@ -1,0 +1,273 @@
+# Java try-with-resources — Automatic Resource Management
+
+## 1. What Is try-with-resources?
+
+In Java, applications frequently work with external resources such as:
+
+- Files
+- Database connections
+- Input and output streams
+- Network connections
+- Buffered readers
+
+These resources need to be closed after use.
+
+If we forget to close them, they can remain open and consume system resources.
+
+Java introduced **try-with-resources in Java 7** to automatically close resources after they are no longer needed.
+
+Instead of manually closing everything using a `finally` block, Java handles the cleanup for us.
+
+## 2. Why Is It Important?
+
+Imagine opening a file and reading its contents.
+
+After reading, the file should be closed properly.
+
+Without automatic resource management, forgetting to close a file can lead to resource leaks.
+
+Try-with-resources helps developers:
+
+- Avoid resource leaks.
+- Write cleaner code.
+- Reduce manual cleanup.
+- Handle exceptions during resource closing.
+- Manage multiple resources more safely.
+
+## 3. Understanding the Basic Syntax
+
+```java
+try (ResourceType resource = new ResourceType()) {
+
+    // Use the resource here
+
+} catch (Exception e) {
+
+    e.printStackTrace();
+
+}
+```
+
+The resource is declared inside the parentheses after `try`.
+
+When execution leaves the try block, Java automatically closes the resource.
+
+## 4. A Simple Example: Reading a File
+
+```java
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+
+public class Main {
+    public static void main(String[] args) {
+
+        try (BufferedReader reader =
+                 new BufferedReader(new FileReader("data.txt"))) {
+
+            String line;
+
+            while ((line = reader.readLine()) != null) {
+                System.out.println(line);
+            }
+
+        } catch (IOException e) {
+            System.out.println("Error reading file: " + e.getMessage());
+        }
+    }
+}
+```
+
+### How does it work?
+
+1. Java opens the file using `FileReader`.
+2. `BufferedReader` reads the file efficiently.
+3. The program processes each line.
+4. When the try block finishes, Java automatically closes the reader.
+5. If an exception occurs, the resource is still closed.
+
+You don't need to explicitly call `reader.close()`.
+
+## 5. What Happens Internally?
+
+The compiler handles resource cleanup by generating code that ensures resources are closed.
+
+Conceptually, try-with-resources behaves similarly to:
+
+```java
+BufferedReader reader = null;
+
+try {
+    reader = new BufferedReader(new FileReader("data.txt"));
+
+    // Read file
+
+} finally {
+    if (reader != null) {
+        reader.close();
+    }
+}
+```
+
+This is a simplified illustration. The actual compiler-generated behavior also handles exceptions thrown during closing.
+
+## 6. What Is AutoCloseable?
+
+Here's an important concept behind try-with-resources.
+
+Java provides an interface called `AutoCloseable`.
+
+A class must implement `AutoCloseable` to be used as a resource in try-with-resources.
+
+```java
+public interface AutoCloseable {
+    void close() throws Exception;
+}
+```
+
+Many Java resource classes already implement this interface.
+
+Examples include:
+
+- `BufferedReader`
+- `FileReader`
+- `FileWriter`
+- `Connection`
+- `PreparedStatement`
+- `ResultSet`
+
+When the try block finishes, Java automatically invokes the resource's `close()` method.
+
+## 7. Creating Your Own AutoCloseable Class
+
+You can also create your own resource class.
+
+```java
+class MyResource implements AutoCloseable {
+
+    public void use() {
+        System.out.println("Using resource...");
+    }
+
+    @Override
+    public void close() {
+        System.out.println("Resource closed!");
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+
+        try (MyResource resource = new MyResource()) {
+            resource.use();
+        }
+    }
+}
+```
+
+**Output:**
+
+```text
+Using resource...
+Resource closed!
+```
+
+Even though we never explicitly call `close()`, Java invokes it automatically.
+
+## 8. Managing Multiple Resources
+
+You can declare multiple resources inside a single try-with-resources statement.
+
+```java
+import java.io.*;
+
+public class Main {
+    public static void main(String[] args) {
+
+        try (
+            FileReader file = new FileReader("input.txt");
+            BufferedReader reader = new BufferedReader(file)
+        ) {
+
+            System.out.println(reader.readLine());
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+Resources are closed in the reverse order of their declaration.
+
+In this example:
+
+1. `reader` is closed first.
+2. `file` is closed afterward.
+
+Closing the BufferedReader also closes its underlying FileReader, so declaring both separately here is redundant. The example illustrates reverse-order cleanup; normally, declaring only the outermost resource is preferable.
+
+## 9. try-with-resources vs finally
+
+| Feature | try-with-resources | finally |
+|---|---|---|
+| Resource cleanup | Automatic | Usually manual |
+| Code readability | Cleaner | Can be more verbose |
+| Resource closing | Calls `close()` automatically | Developer writes cleanup code |
+| Multiple resources | Supported directly | Requires additional cleanup logic |
+| Exception handling during close | Handles suppressed exceptions | Must be handled manually |
+
+## 10. What Are Suppressed Exceptions?
+
+This is one of the most interesting details of try-with-resources.
+
+Imagine:
+
+- An exception occurs while reading a file.
+- Another exception occurs while closing the file.
+
+Which exception should Java report?
+
+Java preserves the original exception and attaches the closing exception as a **suppressed exception**.
+
+You can inspect suppressed exceptions using:
+
+```java
+try (MyResource resource = new MyResource()) {
+
+    throw new RuntimeException("Main operation failed");
+
+} catch (Exception e) {
+
+    System.out.println(e.getMessage());
+
+    for (Throwable suppressed : e.getSuppressed()) {
+        System.out.println(suppressed.getMessage());
+    }
+}
+```
+
+This mechanism prevents an exception during cleanup from hiding the original failure.
+
+## 11. Common Mistakes
+
+- Forgetting that a resource must implement `AutoCloseable` or its subinterface `Closeable`.
+- Assuming every Java object can be used in try-with-resources.
+- Closing the same resource manually when automatic cleanup is already managing it.
+- Assuming resources remain available after the try block.
+- Declaring multiple resources unnecessarily when one resource already manages another.
+- Confusing resource cleanup with exception handling.
+
+## 12. Key Takeaways
+
+- Try-with-resources was introduced in Java 7.
+- It automatically closes resources after use.
+- Resources must implement `AutoCloseable` or `Closeable`.
+- Multiple resources can be declared in one try statement.
+- Resources are closed in reverse declaration order.
+- Suppressed exceptions preserve failures that occur during resource cleanup.
+- It is widely useful in file handling, JDBC, and stream processing.
+
+## One-Line Summary
+
+**Java try-with-resources automatically manages resource cleanup, helping developers prevent resource leaks and write safer, cleaner code.**
