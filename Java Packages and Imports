@@ -1,0 +1,262 @@
+# Java Packages and Imports — Organizing Classes
+
+## 1. What Are Packages in Java?
+
+A package in Java is a mechanism for grouping related classes, interfaces, and other types together.
+
+Think of a package like a folder on your computer.
+
+Instead of keeping every Java class in one place, we organize related classes into separate packages.
+
+For example:
+
+```text
+myapplication/
+│
+├── Main.java
+│
+├── student/
+│   ├── Student.java
+│   └── StudentDetails.java
+│
+└── teacher/
+    └── Teacher.java
+```
+
+Here, `student` and `teacher` are separate packages.
+
+## 2. Why Are Packages Important?
+
+Packages help developers:
+
+- Organize large Java applications.
+- Avoid naming conflicts between classes.
+- Reuse classes across different parts of a project.
+- Control access to classes and members.
+- Maintain cleaner project structures.
+
+Without packages, managing hundreds of Java classes would become difficult.
+
+## 3. How to Create a Package
+
+Use the `package` keyword at the beginning of a Java source file.
+
+```java
+package student;
+
+public class Student {
+
+    public void display() {
+        System.out.println("Student details");
+    }
+}
+```
+
+The class belongs to the `student` package.
+
+A package declaration must appear before imports and class declarations.
+
+## 4. How to Import a Class
+
+Suppose another class needs to use `Student`.
+
+You can import it using the `import` keyword.
+
+```java
+import student.Student;
+
+public class Main {
+
+    public static void main(String[] args) {
+
+        Student s = new Student();
+
+        s.display();
+    }
+}
+```
+
+Output:
+
+```text
+Student details
+```
+
+The import statement allows you to refer to `Student` by its simple name instead of writing its fully qualified name.
+
+## 5. Different Ways to Import Classes
+
+Java provides different ways to access types from packages.
+
+### A. Import a specific class
+
+```java
+import java.util.ArrayList;
+```
+
+This imports the `ArrayList` class.
+
+### B. Import all accessible types from a package
+
+```java
+import java.util.*;
+```
+
+This allows you to use accessible types declared directly in `java.util` without importing each one separately.
+
+**Important:** The wildcard does not import classes from subpackages.
+
+For example, `java.util.*` does not import `java.util.concurrent.*`.
+
+### C. Use the fully qualified class name
+
+You can use a class without importing it by writing its complete package name.
+
+```java
+public class Main {
+
+    public static void main(String[] args) {
+
+        java.util.ArrayList<String> names =
+                new java.util.ArrayList<>();
+
+        names.add("Nikitha");
+
+        System.out.println(names);
+    }
+}
+```
+
+## 6. Understanding Built-in Packages
+
+Java provides many built-in packages containing useful classes and interfaces.
+
+| Package | Purpose | Example classes |
+|---|---|---|
+| `java.lang` | Fundamental Java functionality | String, Math, System |
+| `java.util` | Collections and utilities | ArrayList, HashMap, Scanner |
+| `java.io` | Input and output operations | File, BufferedReader |
+| `java.net` | Networking | URL, Socket |
+| `java.time` | Date and time handling | LocalDate, LocalTime |
+| `java.sql` | Database connectivity | Connection, ResultSet |
+
+The `java.lang` package is imported automatically, so you don't need to write `import java.lang.String`.
+
+## 7. What Is a Fully Qualified Class Name?
+
+A fully qualified class name includes the package name and the class name.
+
+For example:
+
+```java
+java.util.ArrayList
+```
+
+Here:
+- `java.util` is the package.
+- `ArrayList` is the class.
+
+Why is this useful?
+
+Imagine two packages contain classes with the same name.
+
+```java
+package school;
+
+public class Student {
+}
+```
+
+```java
+package college;
+
+public class Student {
+}
+```
+
+Both classes are named `Student`, but they belong to different packages.
+
+You can distinguish them using their fully qualified names:
+
+```java
+school.Student
+college.Student
+```
+
+This helps avoid naming conflicts.
+
+## 8. What Is a Static Import?
+
+A static import allows you to access static members of a class without repeatedly writing the class name.
+
+Without static import:
+
+```java
+public class Main {
+
+    public static void main(String[] args) {
+
+        System.out.println(Math.sqrt(25));
+        System.out.println(Math.PI);
+    }
+}
+```
+
+With static import:
+
+```java
+import static java.lang.Math.*;
+
+public class Main {
+
+    public static void main(String[] args) {
+
+        System.out.println(sqrt(25));
+        System.out.println(PI);
+    }
+}
+```
+
+Output:
+
+```text
+5.0
+3.141592653589793
+```
+
+Static imports are useful, but importing too many members can make code harder to understand.
+
+## 9. Package vs Import
+
+| Feature | Package | Import |
+|---|---|---|
+| Purpose | Groups related types | Makes types accessible by simple names |
+| Keyword | `package` | `import` |
+| Location | At the beginning of a source file | After package declaration |
+| Example | `package student;` | `import student.Student;` |
+
+A package declaration tells Java where a class belongs. An import statement tells Java which types you want to refer to by their simple names.
+
+## 10. Common Mistakes
+
+- Forgetting to declare the correct package.
+- Placing the package declaration after an import.
+- Assuming wildcard imports include subpackages.
+- Confusing package names with class names.
+- Forgetting that `java.lang` is automatically imported.
+- Assuming importing a class changes its access permissions.
+- Using classes from another package without checking their accessibility.
+
+## 11. Key Takeaways
+
+- Packages organize related Java classes and interfaces.
+- The `package` keyword declares a class's package.
+- The `import` keyword allows access to types using their simple names.
+- Java provides built-in packages such as `java.util` and `java.io`.
+- Fully qualified names help distinguish classes with identical names.
+- Static imports allow direct access to static members.
+- Packages make large Java applications easier to organize and maintain.
+
+## One-Line Summary
+
+**Java packages organize related classes into logical groups, while import statements make those classes easier to use across an application.**
