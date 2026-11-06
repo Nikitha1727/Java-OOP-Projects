@@ -1,0 +1,270 @@
+# Java var Keyword — Local Variable Type Inference
+
+## 1. What Is var in Java?
+
+Before Java 10, developers had to explicitly specify the data type of every local variable.
+
+For example:
+
+```java
+String name = "Nikitha";
+int age = 20;
+double percentage = 85.5;
+```
+
+Java 10 introduced the `var` keyword, which allows the compiler to infer the variable's type from its initializer.
+
+Example:
+
+```java
+var name = "Nikitha";
+var age = 20;
+var percentage = 85.5;
+```
+
+The compiler automatically determines:
+
+- `name` is a String.
+- `age` is an int.
+- `percentage` is a double.
+
+**Important:** Java is still a statically typed language. `var` does not make variables dynamically typed.
+
+## 2. Why Is var Useful?
+
+The `var` keyword helps developers:
+
+- Reduce repetitive type declarations.
+- Improve code readability in certain situations.
+- Work with complex generic types more conveniently.
+- Write cleaner local variable declarations.
+
+It is especially useful when the type is already obvious from the assigned value.
+
+## 3. Basic Syntax
+
+```java
+var variableName = value;
+```
+
+Example:
+
+```java
+public class Main {
+    public static void main(String[] args) {
+
+        var name = "Nikitha";
+        var age = 20;
+        var salary = 45000.50;
+
+        System.out.println(name);
+        System.out.println(age);
+        System.out.println(salary);
+    }
+}
+```
+
+Output:
+
+```text
+Nikitha
+20
+45000.5
+```
+
+The compiler determines the types during compilation.
+
+## 4. How Does Type Inference Work?
+
+Consider:
+
+```java
+var number = 100;
+```
+
+Java infers the type as `int`.
+
+It does not infer the type based on what value you might assign later.
+
+For example:
+
+```java
+var number = 100;
+
+// This is valid
+number = 200;
+
+// This is invalid
+number = "Hello";
+```
+
+Why?
+
+Because the variable's type was already inferred as `int`.
+
+Once inferred, the type cannot change.
+
+## 5. Using var With Collections
+
+One useful application of `var` is working with generic collections.
+
+Without `var`:
+
+```java
+import java.util.ArrayList;
+
+public class Main {
+    public static void main(String[] args) {
+
+        ArrayList<String> names = new ArrayList<String>();
+
+        names.add("Nikitha");
+        names.add("Rahul");
+
+        System.out.println(names);
+    }
+}
+```
+
+With `var`:
+
+```java
+import java.util.ArrayList;
+
+public class Main {
+    public static void main(String[] args) {
+
+        var names = new ArrayList<String>();
+
+        names.add("Nikitha");
+        names.add("Rahul");
+
+        System.out.println(names);
+    }
+}
+```
+
+The compiler infers the variable's type as `ArrayList<String>`.
+
+## 6. Using var in Loops
+
+Java also allows `var` in local variable declarations inside loops.
+
+### Traditional for loop
+
+```java
+public class Main {
+    public static void main(String[] args) {
+
+        for (var i = 1; i <= 5; i++) {
+            System.out.println(i);
+        }
+    }
+}
+```
+
+### Enhanced for loop
+
+```java
+import java.util.ArrayList;
+
+public class Main {
+    public static void main(String[] args) {
+
+        var names = new ArrayList<String>();
+
+        names.add("Nikitha");
+        names.add("Rahul");
+
+        for (var name : names) {
+            System.out.println(name);
+        }
+    }
+}
+```
+
+The compiler infers the type of `name` as `String`.
+
+## 7. Where Can You Use var?
+
+`var` has specific restrictions.
+
+| Situation | Allowed? |
+|---|---|
+| Local variables with initializers | Yes |
+| Local variables inside loops | Yes |
+| Local variables inside methods | Yes |
+| Method parameters | No |
+| Method return types | No |
+| Instance variables | No |
+| Static variables | No |
+| Variables declared without an initializer | No |
+| Multiple variables in one declaration | No |
+
+Example of invalid usage:
+
+```java
+var age; // Invalid: no initializer
+
+class Student {
+    var name = "Nikitha"; // Invalid: instance field
+}
+```
+
+## 8. var vs Explicit Data Types
+
+| Feature | Explicit Type | var |
+|---|---|---|
+| Type declaration | Written manually | Inferred by compiler |
+| Introduced | Original Java | Java 10 |
+| Type safety | Statically typed | Statically typed |
+| Initializer required | Not always | Yes |
+| Can change type later? | No | No |
+| Scope | Depends on declaration | Local variables only |
+
+Both approaches produce statically typed variables.
+
+## 9. Important: var Is Not a Keyword for Dynamic Typing
+
+A common misunderstanding is that `var` allows a variable to store different types of values.
+
+That is incorrect.
+
+```java
+var value = 10;
+
+value = 20;       // Valid
+value = "Java";   // Compilation error
+```
+
+The compiler has already inferred `value` as an integer.
+
+Also, `var` cannot be initialized directly with `null` because the compiler cannot infer a specific type from it.
+
+```java
+var name = null; // Compilation error
+```
+
+## 10. Common Mistakes
+
+- Using `var` without an initializer.
+- Assuming `var` makes Java dynamically typed.
+- Trying to use `var` for instance or static variables.
+- Using `var` for method parameters.
+- Initializing `var` with `null`.
+- Using `var` when the inferred type makes the code difficult to understand.
+
+## 11. Key Takeaways
+
+- `var` was introduced in Java 10.
+- It enables local variable type inference.
+- The compiler determines the type from the initializer.
+- Java remains statically typed.
+- The inferred type cannot change.
+- `var` requires an initializer.
+- It can be used in local variable declarations, including loop variables.
+- It cannot be used for fields, method parameters, or return types.
+
+## One-Line Summary
+
+**Java var allows the compiler to infer local variable types automatically, reducing repetitive declarations while maintaining Java's static type safety.**
