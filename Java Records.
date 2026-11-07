@@ -1,0 +1,163 @@
+# Java Records — Simplifying Data Classes
+
+## 1. What Are Records in Java?
+
+A **record** is a special type of class introduced in Java 16 that is designed to hold data.
+
+Normally, when creating a class to store information, we write:
+- Private fields
+- A constructor
+- Getter methods
+- `toString()`
+- `equals()`
+- `hashCode()`
+
+A record automatically provides these methods, reducing repetitive code.
+
+Think of a record as a shortcut for creating a class whose main purpose is to store data.
+
+## 2. Creating a Normal Class
+
+```java
+class Student {
+    private final String name;
+    private final int age;
+
+    public Student(String name, int age) {
+        this.name = name;
+        this.age = age;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public int getAge() {
+        return age;
+    }
+}
+```
+
+We need several lines just to store two values.
+
+## 3. Creating the Same Structure Using a Record
+
+```java
+record Student(String name, int age) {
+}
+```
+
+That's it!
+
+Java automatically generates:
+- A constructor
+- Accessor methods
+- `toString()`
+- `equals()`
+- `hashCode()`
+
+## 4. How to Use a Record
+
+```java
+public class Main {
+    public static void main(String[] args) {
+
+        Student s1 = new Student("Nikitha", 19);
+
+        System.out.println(s1.name());
+        System.out.println(s1.age());
+
+        System.out.println(s1);
+    }
+}
+```
+
+**Output:**
+```text
+Nikitha
+19
+Student[name=Nikitha, age=19]
+```
+
+Notice that record accessor methods use the component name, such as `name()`, instead of `getName()`.
+
+## 5. Records Are Immutable
+
+Record components are implicitly `private` and `final`.
+
+This means you cannot reassign their values after creating the record.
+
+```java
+Student s1 = new Student("Nikitha", 19);
+
+// Not allowed:
+// s1.age = 20;
+```
+
+However, records are only *shallowly immutable*. If a record contains a mutable object, that object's contents may still change.
+
+## 6. Can We Add Methods to Records?
+
+Yes! Records can contain custom methods.
+
+```java
+record Student(String name, int marks) {
+
+    public void displayResult() {
+        System.out.println(name + " scored " + marks);
+    }
+}
+```
+
+Usage:
+
+```java
+Student s1 = new Student("Nikitha", 90);
+
+s1.displayResult();
+```
+
+**Output:**
+```text
+Nikitha scored 90
+```
+
+## 7. Record vs Normal Class
+
+| Feature | Normal Class | Record |
+|---|---|---|
+| Constructor | Written manually | Automatically generated |
+| Accessors | Written manually | Automatically generated |
+| `toString()` | Usually written manually | Automatically generated |
+| `equals()` | Usually written manually | Automatically generated |
+| Component fields | Can be mutable | Final |
+| Main purpose | General-purpose objects | Data carriers |
+
+## 8. When Should We Use Records?
+
+Records are useful when:
+- Storing student details
+- Representing employee information
+- Returning multiple values from a method
+- Creating simple API response objects
+- Working with data that should not be reassigned
+
+Avoid records when you need a class with mutable instance fields or a more complex inheritance structure. Records cannot extend ordinary classes.
+
+## 9. Common Mistakes
+
+1. Using `getName()` instead of `name()` for a record accessor.
+2. Trying to change a record component after object creation.
+3. Assuming records are deeply immutable.
+4. Thinking records can extend another class.
+
+## 10. Key Takeaways
+
+- Records were introduced as a permanent Java feature in Java 16.
+- They reduce boilerplate code.
+- They automatically generate useful methods.
+- Their component fields are implicitly `private final`.
+- They are ideal for simple data-carrying objects.
+- Records can have custom methods and constructors.
+
+**One-line summary:** Java Records make it easier to create concise classes whose primary purpose is to store data.
