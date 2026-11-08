@@ -1,0 +1,243 @@
+# Java Functional Interfaces and Lambda Expressions
+
+## 1. What Is a Functional Interface?
+
+A **functional interface** is an interface that contains exactly one abstract method.
+
+It can also contain default and static methods.
+
+A functional interface tells Java what operation needs to be performed.
+
+Example:
+
+```java
+@FunctionalInterface
+interface Greeting {
+    void sayHello();
+}
+```
+
+Here:
+- `Greeting` is an interface.
+- `sayHello()` is its only abstract method.
+- `@FunctionalInterface` tells the compiler to check that the interface follows this rule.
+
+## 2. Implementing an Interface Without a Lambda
+
+Normally, we implement an interface using a class or an anonymous class.
+
+```java
+interface Greeting {
+    void sayHello();
+}
+
+public class Main {
+    public static void main(String[] args) {
+
+        Greeting greeting = new Greeting() {
+            public void sayHello() {
+                System.out.println("Hello, Nikitha!");
+            }
+        };
+
+        greeting.sayHello();
+    }
+}
+```
+
+This works, but it requires extra code.
+
+## 3. What Is a Lambda Expression?
+
+A **lambda expression** is a shorter way to provide an implementation of a functional interface.
+
+It was introduced in Java 8.
+
+Syntax:
+
+```java
+(parameters) -> {
+    // code to execute
+}
+```
+
+The arrow `->` separates the parameters from the method body.
+
+We can rewrite the previous example using a lambda:
+
+```java
+@FunctionalInterface
+interface Greeting {
+    void sayHello();
+}
+
+public class Main {
+    public static void main(String[] args) {
+
+        Greeting greeting = () -> {
+            System.out.println("Hello, Nikitha!");
+        };
+
+        greeting.sayHello();
+    }
+}
+```
+
+**Output:**
+```text
+Hello, Nikitha!
+```
+
+The lambda provides the implementation of `sayHello()` without creating a separate class.
+
+## 4. Understanding Lambda Syntax
+
+Consider this example:
+
+```java
+@FunctionalInterface
+interface Calculator {
+    int add(int a, int b);
+}
+
+public class Main {
+    public static void main(String[] args) {
+
+        Calculator calculator = (a, b) -> a + b;
+
+        System.out.println(calculator.add(10, 20));
+    }
+}
+```
+
+**Output:**
+```text
+30
+```
+
+Breaking it down:
+
+| Part | Meaning |
+|---|---|
+| `(a, b)` | Method parameters |
+| `->` | Separates parameters and body |
+| `a + b` | Operation performed |
+| `calculator.add(10, 20)` | Calls the implemented method |
+
+Because the lambda contains only one expression, we don't need curly braces or an explicit `return`.
+
+## 5. Different Lambda Expression Formats
+
+**No parameters:**
+
+```java
+() -> System.out.println("Welcome");
+```
+
+**One parameter:**
+
+```java
+name -> System.out.println(name);
+```
+
+**Multiple parameters:**
+
+```java
+(a, b) -> a + b;
+```
+
+**Multiple statements:**
+
+```java
+(a, b) -> {
+    int result = a + b;
+    return result;
+};
+```
+
+## 6. Common Built-in Functional Interfaces
+
+Java provides several ready-made functional interfaces in the `java.util.function` package.
+
+| Interface | Purpose | Example |
+|---|---|---|
+| `Predicate<T>` | Tests a condition and returns boolean | `n -> n > 10` |
+| `Function<T, R>` | Takes input and returns a result | `n -> n * 2` |
+| `Consumer<T>` | Accepts input and performs an action | `n -> System.out.println(n)` |
+| `Supplier<T>` | Supplies a value without taking input | `() -> "Hello"` |
+
+Example using `Predicate`:
+
+```java
+import java.util.function.Predicate;
+
+public class Main {
+    public static void main(String[] args) {
+
+        Predicate<Integer> isAdult = age -> age >= 18;
+
+        System.out.println(isAdult.test(19));
+        System.out.println(isAdult.test(15));
+    }
+}
+```
+
+**Output:**
+```text
+true
+false
+```
+
+## 7. Where Are Lambda Expressions Used?
+
+Lambda expressions are commonly used with:
+- Collections
+- Sorting
+- Filtering data
+- The Stream API
+- Event handling
+- Functional programming
+
+Example using `forEach()`:
+
+```java
+import java.util.Arrays;
+import java.util.List;
+
+public class Main {
+    public static void main(String[] args) {
+
+        List<String> names = Arrays.asList(
+            "Nikitha", "Rahul", "Ananya"
+        );
+
+        names.forEach(name -> System.out.println(name));
+    }
+}
+```
+
+**Output:**
+```text
+Nikitha
+Rahul
+Ananya
+```
+
+## 8. Common Mistakes
+
+1. Creating a functional interface with more than one abstract method.
+2. Forgetting that a lambda needs a compatible functional interface target.
+3. Confusing `->` with the `return` keyword.
+4. Using parentheses incorrectly around multiple parameters.
+5. Assuming every interface is automatically a functional interface.
+
+## 9. Key Takeaways
+
+- A functional interface has exactly one abstract method.
+- `@FunctionalInterface` helps the compiler validate it.
+- Lambda expressions provide concise implementations.
+- Lambda expressions were introduced in Java 8.
+- Built-in interfaces include `Predicate`, `Function`, `Consumer`, and `Supplier`.
+- They are widely used with collections and streams.
+
+**One-line summary:** Functional interfaces define a single operation, while lambda expressions provide a shorter way to implement that operation.
