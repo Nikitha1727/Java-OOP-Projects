@@ -1,0 +1,282 @@
+# Java Stream API — Processing Collections Efficiently
+
+## 1. What Is the Stream API?
+
+The **Stream API** is a feature introduced in Java 8 that allows us to process collections of data in a clean and readable way.
+
+Instead of writing lengthy loops, we can use streams to:
+- Filter data
+- Transform values
+- Sort elements
+- Find specific elements
+- Calculate results
+- Collect processed data
+
+**Important:** A stream does not store data. It processes data from a source, such as a List or Set.
+
+## 2. Traditional Approach vs Stream API
+
+Suppose we have a list of numbers and want to print only the even numbers.
+
+**Using a traditional loop:**
+
+```java
+import java.util.*;
+
+public class Main {
+    public static void main(String[] args) {
+
+        List<Integer> numbers = Arrays.asList(1, 2, 3, 4, 5, 6);
+
+        for (int number : numbers) {
+            if (number % 2 == 0) {
+                System.out.println(number);
+            }
+        }
+    }
+}
+```
+
+**Using the Stream API:**
+
+```java
+import java.util.*;
+
+public class Main {
+    public static void main(String[] args) {
+
+        List<Integer> numbers = Arrays.asList(1, 2, 3, 4, 5, 6);
+
+        numbers.stream()
+               .filter(number -> number % 2 == 0)
+               .forEach(System.out::println);
+    }
+}
+```
+
+**Output:**
+```text
+2
+4
+6
+```
+
+Both approaches produce the same result, but streams make the processing steps easier to read.
+
+## 3. How Does a Stream Work?
+
+A stream operation generally follows three stages:
+
+1. **Source:** Where the data comes from.
+2. **Intermediate operations:** Operations that transform or filter the data.
+3. **Terminal operation:** An operation that produces the final result or performs an action.
+
+Example:
+
+```java
+numbers.stream()
+       .filter(n -> n > 3)
+       .map(n -> n * 2)
+       .forEach(System.out::println);
+```
+
+Here:
+- `stream()` creates a stream from the list.
+- `filter()` selects numbers greater than 3.
+- `map()` doubles each selected number.
+- `forEach()` prints the results.
+
+**Output:**
+```text
+8
+10
+12
+```
+
+## 4. Important Stream Operations
+
+| Method | Purpose |
+|---|---|
+| `filter()` | Selects elements based on a condition |
+| `map()` | Transforms each element |
+| `sorted()` | Sorts elements |
+| `distinct()` | Removes duplicate elements |
+| `limit()` | Restricts the number of elements |
+| `count()` | Counts elements |
+| `forEach()` | Performs an action on each element |
+| `collect()` | Collects results into a collection or another result container |
+| `reduce()` | Combines elements into a single result |
+
+## 5. Using filter()
+
+The `filter()` method selects elements that satisfy a condition.
+
+```java
+import java.util.*;
+
+public class Main {
+    public static void main(String[] args) {
+
+        List<Integer> numbers = Arrays.asList(10, 15, 20, 25, 30);
+
+        numbers.stream()
+               .filter(n -> n >= 20)
+               .forEach(System.out::println);
+    }
+}
+```
+
+**Output:**
+```text
+20
+25
+30
+```
+
+## 6. Using map()
+
+The `map()` method transforms every element in a stream.
+
+```java
+import java.util.*;
+
+public class Main {
+    public static void main(String[] args) {
+
+        List<Integer> numbers = Arrays.asList(1, 2, 3, 4);
+
+        numbers.stream()
+               .map(n -> n * n)
+               .forEach(System.out::println);
+    }
+}
+```
+
+**Output:**
+```text
+1
+4
+9
+16
+```
+
+## 7. Using sorted() and distinct()
+
+```java
+import java.util.*;
+
+public class Main {
+    public static void main(String[] args) {
+
+        List<Integer> numbers = Arrays.asList(5, 2, 3, 2, 1, 5);
+
+        numbers.stream()
+               .distinct()
+               .sorted()
+               .forEach(System.out::println);
+    }
+}
+```
+
+**Output:**
+```text
+1
+2
+3
+5
+```
+
+- `distinct()` removes duplicate elements.
+- `sorted()` arranges the remaining elements in natural order.
+
+## 8. Using collect()
+
+The `collect()` method gathers processed stream elements into a result.
+
+```java
+import java.util.*;
+import java.util.stream.Collectors;
+
+public class Main {
+    public static void main(String[] args) {
+
+        List<String> names = Arrays.asList(
+            "Nikitha", "Rahul", "Ananya", "Nikhil"
+        );
+
+        List<String> filteredNames = names.stream()
+                .filter(name -> name.startsWith("N"))
+                .collect(Collectors.toList());
+
+        System.out.println(filteredNames);
+    }
+}
+```
+
+**Output:**
+```text
+[Nikitha, Nikhil]
+```
+
+## 9. Using reduce()
+
+The `reduce()` method combines stream elements into one result.
+
+Example: Finding the sum of numbers.
+
+```java
+import java.util.*;
+
+public class Main {
+    public static void main(String[] args) {
+
+        List<Integer> numbers = Arrays.asList(10, 20, 30, 40);
+
+        int sum = numbers.stream()
+                         .reduce(0, (a, b) -> a + b);
+
+        System.out.println("Sum: " + sum);
+    }
+}
+```
+
+**Output:**
+```text
+Sum: 100
+```
+
+Here, `0` is the starting value, and `(a, b) -> a + b` combines the numbers.
+
+## 10. Intermediate vs Terminal Operations
+
+| Intermediate Operations | Terminal Operations |
+|---|---|
+| `filter()` | `forEach()` |
+| `map()` | `collect()` |
+| `sorted()` | `count()` |
+| `distinct()` | `reduce()` |
+| `limit()` | `min()` / `max()` |
+
+Intermediate operations return another stream and are generally lazy. Processing starts when a terminal operation is invoked.
+
+## 11. Important Rules to Remember
+
+1. A stream does not modify its original collection by default.
+2. A stream can be consumed only once.
+3. Intermediate operations are lazy.
+4. A terminal operation triggers stream processing.
+5. Streams can be created from collections, arrays, and other data sources.
+6. Use streams when they make data processing clearer; ordinary loops are still useful.
+
+## 12. Key Takeaways
+
+- Stream API was introduced in Java 8.
+- It helps process collections in a readable way.
+- `filter()` selects elements.
+- `map()` transforms elements.
+- `sorted()` arranges elements.
+- `collect()` gathers results.
+- `reduce()` combines elements into one result.
+- Streams work especially well with lambda expressions.
+
+**One-line summary:** The Java Stream API makes it easier to filter, transform, and process collections without writing lengthy loops.
