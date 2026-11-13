@@ -1,0 +1,476 @@
+
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import java.awt.*;
+import java.io.*;
+import java.security.SecureRandom;
+import java.security.spec.KeySpec;
+import java.util.Base64;
+import java.util.HashMap;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.PBEKeySpec;
+
+public class SecureLoginSystem extends JFrame {
+
+    private static final String FILE_NAME = "users.dat";
+    private static final int ITERATIONS = 210000;
+
+    private HashMap<String, String> users = new HashMap<>();
+
+    private int attempts = 3;
+    private String currentUser;
+
+    private final Color BACKGROUND = new Color(25, 30, 45);
+    private final Color PANEL = new Color(38, 45, 62);
+    private final Color ACCENT = new Color(99, 102, 241);
+
+    public SecureLoginSystem() {
+
+        setTitle("Secure Login System");
+        setSize(600, 480);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
+        setResizable(false);
+
+        loadUsers();
+        showLoginScreen();
+    }
+
+    // LOGIN SCREEN
+    private void showLoginScreen() {
+
+        getContentPane().removeAll();
+        setLayout(new BorderLayout());
+
+        JPanel panel = createPanel();
+
+        JLabel title = createLabel("SECURE LOGIN", 28);
+        JLabel subtitle = createLabel(
+            "Welcome back! Sign in to continue.", 14
+        );
+
+        JTextField usernameField = new JTextField();
+        JPasswordField passwordField = new JPasswordField();
+
+        styleField(usernameField);
+        styleField(passwordField);
+
+        JCheckBox showPassword = new JCheckBox("Show Password");
+        showPassword.setBackground(BACKGROUND);
+        showPassword.setForeground(Color.LIGHT_GRAY);
+
+        showPassword.addActionListener(e -> {
+            passwordField.setEchoChar(
+                showPassword.isSelected() ? (char) 0 : '\u2022'
+            );
+        });
+
+        JLabel message = createLabel("", 13);
+        message.setForeground(Color.PINK);
+
+        JButton loginButton = createButton("Login");
+        JButton registerButton = createButton("Create Account");
+
+        loginButton.addActionListener(e -> {
+
+            String username = usernameField.getText().trim();
+            char[] password = passwordField.getPassword();
+
+            if (username.isEmpty() || password.length == 0) {
+                message.setText("Please enter all details.");
+                java.util.Arrays.fill(password, '\0');
+                return;
+            }
+
+            String storedData = users.get(username);
+
+            try {
+
+                if (storedData != null &&
+                    verifyPassword(password, storedData)) {
+
+                    currentUser = username;
+                    attempts = 3;
+
+                    java.util.Arrays.fill(password, '\0');
+
+                    showDashboard();
+
+                } else {
+
+                    java.util.Arrays.fill(password, '\0');
+
+                    attempts--;
+
+                    if (attempts == 0) {
+
+                        JOptionPane.showMessageDialog(
+                            this,
+                            "Too many failed attempts. Application closing."
+                        );
+
+                        System.exit(0);
+
+                    } else {
+
+                        message.setText(
+                            "Invalid credentials. Attempts left: " + attempts
+                        );
+
+                        passwordField.setText();
+                    }
+                }
+
+            } catch (Exception ex) {
+
+                java.util.Arrays.fill(password, '\0');
+                message.setText("Authentication error.");
+            }
+        });
+
+        registerButton.addActionListener(e -> showRegistrationScreen());
+
+        panel.add(title);
+        panel.add(Box.createVerticalStrut(10));
+        panel.add(subtitle);
+        panel.add(Box.createVerticalStrut(30));
+
+        panel.add(createLabel("Username", 13));
+        panel.add(usernameField);
+
+        panel.add(Box.createVerticalStrut(15));
+        panel.add(createLabel("Password", 13));
+        panel.add(passwordField);
+        panel.add(showPassword);
+
+        panel.add(Box.createVerticalStrut(10));
+        panel.add(message);
+        panel.add(Box.createVerticalStrut(15));
+
+        panel.add(loginButton);
+        panel.add(Box.createVerticalStrut(10));
+        panel.add(registerButton);
+
+        add(panel);
+
+        revalidate();
+        repaint();
+    }
+
+    // REGISTRATION SCREEN
+    private void showRegistrationScreen() {
+
+        getContentPane().removeAll();
+        setLayout(new BorderLayout());
+
+        JPanel panel = createPanel();
+
+        JLabel title = createLabel("CREATE ACCOUNT", 26);
+
+        JTextField usernameField = new JTextField();
+        JPasswordField passwordField = new JPasswordField();
+        JPasswordField confirmField = new JPasswordField();
+
+        styleField(usernameField);
+        styleField(passwordField);
+        styleField(confirmField);
+
+        JLabel message = createLabel("", 13);
+        message.setForeground(Color.PINK);
+
+        JButton registerButton = createButton("Register");
+        JButton backButton = createButton("Back to Login");
+
+        registerButton.addActionListener(e -> {
+
+            String username = usernameField.getText().trim();
+
+            char[] password = passwordField.getPassword();
+            char[] confirm = confirmField.getPassword();
+
+            if (username.isEmpty() ||
+                password.length == 0 ||
+                confirm.length == 0) {
+
+                message.setText("Please fill in all fields.");
+
+            } else if (username.contains("|")) {
+
+                message.setText("Username cannot contain |");
+
+            } else if (users.containsKey(username)) {
+
+                message.setText("Username already exists.");
+
+            } else if (password.length < 8) {
+
+                message.setText("Password must contain at least 8 characters.");
+
+            } else if (!java.util.Arrays.equals(password, confirm)) {
+
+                message.setText("Passwords do not match.");
+
+            } else {
+
+                try {
+
+                    String hashedPassword = hashPassword(password);
+
+                    users.put(username, hashedPassword);
+
+                    saveUsers();
+
+                    java.util.Arrays.fill(password, '\0');
+                    java.util.Arrays.fill(confirm, '\0');
+
+                    JOptionPane.showMessageDialog(
+                        this,
+                        "Account created successfully!"
+                    );
+
+                    showLoginScreen();
+                    return;
+
+                } catch (Exception ex) {
+
+                    message.setText("Registration failed.");
+                }
+            }
+
+            java.util.Arrays.fill(password, '\0');
+            java.util.Arrays.fill(confirm, '\0');
+        });
+
+        backButton.addActionListener(e -> showLoginScreen());
+
+        panel.add(title);
+        panel.add(Box.createVerticalStrut(25));
+
+        panel.add(createLabel("Username", 13));
+        panel.add(usernameField);
+
+        panel.add(Box.createVerticalStrut(12));
+        panel.add(createLabel("Password (minimum 8 characters)", 13));
+        panel.add(passwordField);
+
+        panel.add(Box.createVerticalStrut(12));
+        panel.add(createLabel("Confirm Password", 13));
+        panel.add(confirmField);
+
+        panel.add(Box.createVerticalStrut(10));
+        panel.add(message);
+        panel.add(Box.createVerticalStrut(15));
+
+        panel.add(registerButton);
+        panel.add(Box.createVerticalStrut(10));
+        panel.add(backButton);
+
+        add(panel);
+
+        revalidate();
+        repaint();
+    }
+
+    // PASSWORD HASHING
+    private String hashPassword(char[] password) throws Exception {
+
+        byte[] salt = new byte[16];
+
+        new SecureRandom().nextBytes(salt);
+
+        KeySpec spec = new PBEKeySpec(
+            password,
+            salt,
+            ITERATIONS,
+            256
+        );
+
+        SecretKeyFactory factory =
+            SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
+
+        byte[] hash = factory.generateSecret(spec).getEncoded();
+
+        ((PBEKeySpec) spec).clearPassword();
+
+        return Base64.getEncoder().encodeToString(salt)
+            + "|" +
+            Base64.getEncoder().encodeToString(hash);
+    }
+
+    // VERIFY PASSWORD
+    private boolean verifyPassword(
+        char[] password,
+        String storedData
+    ) throws Exception {
+
+        String[] parts = storedData.split("\\|");
+
+        if (parts.length != 2) {
+            return false;
+        }
+
+        byte[] salt = Base64.getDecoder().decode(parts[0]);
+        byte[] expectedHash = Base64.getDecoder().decode(parts[1]);
+
+        PBEKeySpec spec = new PBEKeySpec(
+            password,
+            salt,
+            ITERATIONS,
+            256
+        );
+
+        SecretKeyFactory factory =
+            SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
+
+        byte[] actualHash = factory.generateSecret(spec).getEncoded();
+
+        spec.clearPassword();
+
+        return java.security.MessageDigest.isEqual(
+            expectedHash,
+            actualHash
+        );
+    }
+
+    // SAVE USER DATA
+    private void saveUsers() throws IOException {
+
+        try (BufferedWriter writer =
+                 new BufferedWriter(new FileWriter(FILE_NAME))) {
+
+            for (String username : users.keySet()) {
+
+                writer.write(username + "|" + users.get(username));
+                writer.newLine();
+            }
+        }
+    }
+
+    // LOAD USER DATA
+    private void loadUsers() {
+
+        File file = new File(FILE_NAME);
+
+        if (!file.exists()) {
+            return;
+        }
+
+        try (BufferedReader reader =
+                 new BufferedReader(new FileReader(file))) {
+
+            String line;
+
+            while ((line = reader.readLine()) != null) {
+
+                String[] parts = line.split("\\|", 2);
+
+                if (parts.length == 2) {
+                    users.put(parts[0], parts[1]);
+                }
+            }
+
+        } catch (IOException e) {
+
+            JOptionPane.showMessageDialog(
+                this,
+                "Could not load user accounts."
+            );
+        }
+    }
+
+    // DASHBOARD
+    private void showDashboard() {
+
+        getContentPane().removeAll();
+        setLayout(new BorderLayout());
+
+        JPanel panel = createPanel();
+
+        JLabel title = createLabel("LOGIN SUCCESSFUL", 27);
+
+        JLabel welcome = createLabel(
+            "Welcome, " + currentUser + "!", 20
+        );
+
+        JLabel info = createLabel(
+            "Your account has been authenticated.", 14
+        );
+
+        JButton logoutButton = createButton("Logout");
+
+        logoutButton.addActionListener(e -> {
+
+            currentUser = null;
+            attempts = 3;
+
+            showLoginScreen();
+        });
+
+        panel.add(title);
+        panel.add(Box.createVerticalStrut(30));
+        panel.add(welcome);
+        panel.add(Box.createVerticalStrut(15));
+        panel.add(info);
+        panel.add(Box.createVerticalStrut(40));
+        panel.add(logoutButton);
+
+        add(panel);
+
+        revalidate();
+        repaint();
+    }
+
+    // UI HELPERS
+    private JPanel createPanel() {
+
+        JPanel panel = new JPanel();
+
+        panel.setBackground(BACKGROUND);
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setBorder(new EmptyBorder(35, 110, 30, 110));
+
+        return panel;
+    }
+
+    private JLabel createLabel(String text, int size) {
+
+        JLabel label = new JLabel(text);
+
+        label.setFont(new Font("Arial", Font.BOLD, size));
+        label.setForeground(Color.WHITE);
+        label.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        return label;
+    }
+
+    private JButton createButton(String text) {
+
+        JButton button = new JButton(text);
+
+        button.setFont(new Font("Arial", Font.BOLD, 14));
+        button.setForeground(Color.WHITE);
+        button.setBackground(ACCENT);
+        button.setFocusPainted(false);
+        button.setAlignmentX(Component.CENTER_ALIGNMENT);
+        button.setMaximumSize(new Dimension(300, 42));
+
+        return button;
+    }
+
+    private void styleField(JTextField field) {
+
+        field.setFont(new Font("Arial", Font.PLAIN, 15));
+        field.setMaximumSize(new Dimension(350, 38));
+    }
+
+    // MAIN METHOD
+    public static void main(String[] args) {
+
+        SwingUtilities.invokeLater(() -> {
+
+            SecureLoginSystem app = new SecureLoginSystem();
+
+            app.setVisible(true);
+        });
+    }
+}
