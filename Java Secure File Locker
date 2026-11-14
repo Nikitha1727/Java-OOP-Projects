@@ -1,0 +1,361 @@
+
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import java.awt.*;
+import java.io.*;
+import java.nio.file.Files;
+import java.security.SecureRandom;
+import java.security.spec.KeySpec;
+import java.util.Arrays;
+import java.util.Base64;
+import javax.crypto.Cipher;
+import javax.crypto.SecretKey;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.GCMParameterSpec;
+import javax.crypto.spec.PBEKeySpec;
+import javax.crypto.spec.SecretKeySpec;
+
+public class SecureFileLocker extends JFrame {
+
+    private static final int ITERATIONS = 210000;
+    private static final int KEY_LENGTH = 256;
+
+    private final Color BACKGROUND = new Color(25, 30, 45);
+    private final Color ACCENT = new Color(99, 102, 241);
+
+    private File selectedFile;
+    private JLabel fileLabel;
+    private JLabel statusLabel;
+    private JPasswordField passwordField;
+
+    public SecureFileLocker() {
+
+        setTitle("Secure File Locker");
+        setSize(600, 450);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
+        setResizable(false);
+
+        createUI();
+    }
+
+    // CREATE UI
+    private void createUI() {
+
+        JPanel panel = new JPanel();
+        panel.setBackground(BACKGROUND);
+        panel.setBorder(new EmptyBorder(35, 70, 30, 70));
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+
+        JLabel title = new JLabel("SECURE FILE LOCKER");
+        title.setFont(new Font("Arial", Font.BOLD, 27));
+        title.setForeground(Color.WHITE);
+        title.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        JLabel subtitle = new JLabel(
+            "Encrypt and protect your important files"
+        );
+        subtitle.setForeground(Color.LIGHT_GRAY);
+        subtitle.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        JButton chooseButton = createButton("Choose File");
+
+        fileLabel = createLabel("No file selected");
+
+        JLabel passwordLabel = createLabel("Enter Encryption Password");
+
+        passwordField = new JPasswordField();
+        passwordField.setMaximumSize(new Dimension(400, 40));
+
+        JButton encryptButton = createButton("Encrypt File");
+        JButton decryptButton = createButton("Decrypt File");
+
+        statusLabel = createLabel("Waiting for an action");
+
+        chooseButton.addActionListener(e -> chooseFile());
+
+        encryptButton.addActionListener(e -> encryptFile());
+
+        decryptButton.addActionListener(e -> decryptFile());
+
+        panel.add(title);
+        panel.add(Box.createVerticalStrut(10));
+        panel.add(subtitle);
+
+        panel.add(Box.createVerticalStrut(30));
+        panel.add(chooseButton);
+
+        panel.add(Box.createVerticalStrut(15));
+        panel.add(fileLabel);
+
+        panel.add(Box.createVerticalStrut(20));
+        panel.add(passwordLabel);
+
+        panel.add(Box.createVerticalStrut(10));
+        panel.add(passwordField);
+
+        panel.add(Box.createVerticalStrut(25));
+        panel.add(encryptButton);
+
+        panel.add(Box.createVerticalStrut(12));
+        panel.add(decryptButton);
+
+        panel.add(Box.createVerticalStrut(20));
+        panel.add(statusLabel);
+
+        add(panel);
+    }
+
+    // SELECT FILE
+    private void chooseFile() {
+
+        JFileChooser chooser = new JFileChooser();
+
+        int result = chooser.showOpenDialog(this);
+
+        if (result == JFileChooser.APPROVE_OPTION) {
+
+            selectedFile = chooser.getSelectedFile();
+
+            fileLabel.setText(
+                "Selected: " + selectedFile.getName()
+            );
+
+            statusLabel.setText("File selected successfully");
+        }
+    }
+
+    // GENERATE ENCRYPTION KEY
+    private SecretKey generateKey(char[] password, byte[] salt)
+            throws Exception {
+
+        KeySpec spec = new PBEKeySpec(
+            password,
+            salt,
+            ITERATIONS,
+            KEY_LENGTH
+        );
+
+        SecretKeyFactory factory =
+            SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
+
+        byte[] keyBytes = factory.generateSecret(spec).getEncoded();
+
+        ((PBEKeySpec) spec).clearPassword();
+
+        return new SecretKeySpec(keyBytes, "AES");
+    }
+
+    // ENCRYPT FILE
+    private void encryptFile() {
+
+        if (selectedFile == null) {
+            showMessage("Please select a file first!");
+            return;
+        }
+
+        char[] password = passwordField.getPassword();
+
+        if (password.length < 8) {
+            showMessage("Password must contain at least 8 characters.");
+            Arrays.fill(password, '\0');
+            return;
+        }
+
+        try {
+
+            if (selectedFile.getName().endsWith(".locked")) {
+                showMessage("This file is already encrypted.");
+                return;
+            }
+
+            byte[] originalData = Files.readAllBytes(
+                selectedFile.toPath()
+            );
+
+            byte[] salt = new byte[16];
+            byte[] iv = new byte[12];
+
+            SecureRandom random = new SecureRandom();
+
+            random.nextBytes(salt);
+            random.nextBytes(iv);
+
+            SecretKey key = generateKey(password, salt);
+
+            Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+
+            cipher.init(
+                Cipher.ENCRYPT_MODE,
+                key,
+                new GCMParameterSpec(128, iv)
+            );
+
+            byte[] encryptedData = cipher.doFinal(originalData);
+
+            File outputFile = new File(
+                selectedFile.getParentFile(),
+                selectedFile.getName() + ".locked"
+            );
+
+            try (DataOutputStream output =
+                     new DataOutputStream(
+                         new FileOutputStream(outputFile)
+                     )) {
+
+                output.write(salt);
+                output.write(iv);
+                output.write(encryptedData);
+            }
+
+            statusLabel.setText("File encrypted successfully!");
+
+            showMessage(
+                "Encrypted file saved at:\n" + outputFile.getAbsolutePath()
+            );
+
+        } catch (Exception e) {
+
+            showMessage("Encryption failed: " + e.getMessage());
+
+        } finally {
+
+            Arrays.fill(password, '\0');
+            passwordField.setText();
+        }
+    }
+
+    // DECRYPT FILE
+    private void decryptFile() {
+
+        if (selectedFile == null) {
+            showMessage("Please select an encrypted file!");
+            return;
+        }
+
+        char[] password = passwordField.getPassword();
+
+        if (password.length == 0) {
+            showMessage("Please enter your password.");
+            return;
+        }
+
+        try {
+
+            if (!selectedFile.getName().endsWith(".locked")) {
+                showMessage("Please select a .locked file.");
+                return;
+            }
+
+            byte[] fileData = Files.readAllBytes(
+                selectedFile.toPath()
+            );
+
+            if (fileData.length < 44) {
+                showMessage("Invalid or damaged encrypted file.");
+                return;
+            }
+
+            byte[] salt = Arrays.copyOfRange(fileData, 0, 16);
+
+            byte[] iv = Arrays.copyOfRange(fileData, 16, 28);
+
+            byte[] encryptedData = Arrays.copyOfRange(
+                fileData, 28, fileData.length
+            );
+
+            SecretKey key = generateKey(password, salt);
+
+            Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+
+            cipher.init(
+                Cipher.DECRYPT_MODE,
+                key,
+                new GCMParameterSpec(128, iv)
+            );
+
+            byte[] decryptedData = cipher.doFinal(encryptedData);
+
+            String originalName = selectedFile.getName()
+                .substring(
+                    0,
+                    selectedFile.getName().length() - ".locked".length()
+                );
+
+            File outputFile = new File(
+                selectedFile.getParentFile(),
+                originalName
+            );
+
+            if (outputFile.exists()) {
+                showMessage(
+                    "A file with this name already exists. Rename or move it first."
+                );
+                return;
+            }
+
+            Files.write(outputFile.toPath(), decryptedData);
+
+            statusLabel.setText("File decrypted successfully!");
+
+            showMessage(
+                "Decrypted file saved at:\n" + outputFile.getAbsolutePath()
+            );
+
+        } catch (Exception e) {
+
+            showMessage(
+                "Decryption failed. Check your password or file integrity."
+            );
+
+        } finally {
+
+            Arrays.fill(password, '\0');
+            passwordField.setText();
+        }
+    }
+
+    // BUTTON DESIGN
+    private JButton createButton(String text) {
+
+        JButton button = new JButton(text);
+
+        button.setFont(new Font("Arial", Font.BOLD, 14));
+        button.setForeground(Color.WHITE);
+        button.setBackground(ACCENT);
+        button.setFocusPainted(false);
+        button.setAlignmentX(Component.CENTER_ALIGNMENT);
+        button.setMaximumSize(new Dimension(300, 42));
+
+        return button;
+    }
+
+    // LABEL DESIGN
+    private JLabel createLabel(String text) {
+
+        JLabel label = new JLabel(text);
+
+        label.setFont(new Font("Arial", Font.PLAIN, 14));
+        label.setForeground(Color.WHITE);
+        label.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        return label;
+    }
+
+    // SHOW MESSAGE
+    private void showMessage(String message) {
+
+        JOptionPane.showMessageDialog(this, message);
+    }
+
+    // MAIN METHOD
+    public static void main(String[] args) {
+
+        SwingUtilities.invokeLater(() -> {
+
+            SecureFileLocker app = new SecureFileLocker();
+
+            app.setVisible(true);
+        });
+    }
+}
