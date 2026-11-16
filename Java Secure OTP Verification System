@@ -1,0 +1,195 @@
+
+import javax.swing.*;
+import java.awt.*;
+import java.security.SecureRandom;
+
+public class SecureOTPSystem extends JFrame {
+
+    JTextField otpField;
+    JLabel otpLabel;
+    JLabel statusLabel;
+    JLabel timerLabel;
+
+    SecureRandom random = new SecureRandom();
+
+    String generatedOTP;
+    long expiryTime;
+
+    int attempts = 0;
+    final int MAX_ATTEMPTS = 3;
+    final int OTP_VALIDITY = 60;
+
+    Timer timer;
+
+    SecureOTPSystem() {
+
+        setTitle("Secure OTP Verification");
+        setSize(450, 350);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
+        setLayout(new GridLayout(6, 1, 10, 10));
+
+        getContentPane().setBackground(new Color(30, 30, 45));
+
+        JLabel heading = new JLabel("OTP VERIFICATION SYSTEM");
+        heading.setFont(new Font("Arial", Font.BOLD, 19));
+        heading.setForeground(Color.WHITE);
+        heading.setHorizontalAlignment(JLabel.CENTER);
+
+        otpLabel = new JLabel("Your OTP will appear here");
+        otpLabel.setForeground(Color.CYAN);
+        otpLabel.setHorizontalAlignment(JLabel.CENTER);
+        otpLabel.setFont(new Font("Arial", Font.BOLD, 18));
+
+        otpField = new JTextField();
+        otpField.setHorizontalAlignment(JTextField.CENTER);
+        otpField.setFont(new Font("Arial", Font.BOLD, 18));
+
+        JButton verifyButton = new JButton("Verify OTP");
+        JButton generateButton = new JButton("Generate New OTP");
+
+        statusLabel = new JLabel("Generate an OTP to begin");
+        statusLabel.setForeground(Color.YELLOW);
+        statusLabel.setHorizontalAlignment(JLabel.CENTER);
+
+        timerLabel = new JLabel("Time remaining: --");
+        timerLabel.setForeground(Color.WHITE);
+        timerLabel.setHorizontalAlignment(JLabel.CENTER);
+
+        add(heading);
+        add(otpLabel);
+        add(otpField);
+        add(verifyButton);
+        add(generateButton);
+        add(statusLabel);
+        add(timerLabel);
+
+        verifyButton.addActionListener(e -> verifyOTP());
+
+        generateButton.addActionListener(e -> generateOTP());
+
+        generateOTP();
+
+        setVisible(true);
+    }
+
+    void generateOTP() {
+
+        if (timer != null) {
+            timer.stop();
+        }
+
+        generatedOTP = String.format(
+            "%06d",
+            random.nextInt(1000000)
+        );
+
+        expiryTime = System.currentTimeMillis()
+                + OTP_VALIDITY * 1000L;
+
+        attempts = 0;
+
+        otpLabel.setText("Demo OTP: " + generatedOTP);
+        otpField.setText("");
+
+        statusLabel.setText("Enter the OTP before it expires");
+        statusLabel.setForeground(Color.YELLOW);
+
+        timer = new Timer(1000, e -> updateTimer());
+        timer.start();
+
+        updateTimer();
+    }
+
+    void updateTimer() {
+
+        long remaining = (expiryTime - System.currentTimeMillis())
+                / 1000;
+
+        if (remaining <= 0) {
+
+            timer.stop();
+
+            otpLabel.setText("OTP expired");
+            timerLabel.setText("Time remaining: 0 seconds");
+
+            statusLabel.setText("Generate a new OTP");
+            statusLabel.setForeground(Color.RED);
+
+            generatedOTP = null;
+
+        } else {
+
+            timerLabel.setText(
+                "Time remaining: " + remaining + " seconds"
+            );
+        }
+    }
+
+    void verifyOTP() {
+
+        if (generatedOTP == null) {
+
+            statusLabel.setText("OTP expired. Generate a new one.");
+            statusLabel.setForeground(Color.RED);
+            return;
+        }
+
+        if (System.currentTimeMillis() >= expiryTime) {
+
+            updateTimer();
+            return;
+        }
+
+        if (attempts >= MAX_ATTEMPTS) {
+
+            statusLabel.setText("Maximum attempts reached!");
+            statusLabel.setForeground(Color.RED);
+            return;
+        }
+
+        String enteredOTP = otpField.getText().trim();
+
+        if (enteredOTP.equals(generatedOTP)) {
+
+            timer.stop();
+
+            statusLabel.setText("OTP Verified Successfully!");
+            statusLabel.setForeground(Color.GREEN);
+
+            generatedOTP = null;
+            otpLabel.setText("Verification completed");
+
+        } else {
+
+            attempts++;
+
+            int remaining = MAX_ATTEMPTS - attempts;
+
+            if (remaining == 0) {
+
+                timer.stop();
+                generatedOTP = null;
+
+                statusLabel.setText(
+                    "Maximum attempts reached. Generate a new OTP."
+                );
+
+            } else {
+
+                statusLabel.setText(
+                    "Incorrect OTP! Attempts remaining: " + remaining
+                );
+            }
+
+            statusLabel.setForeground(Color.RED);
+        }
+    }
+
+    public static void main(String[] args) {
+
+        SwingUtilities.invokeLater(() -> {
+            new SecureOTPSystem();
+        });
+    }
+}
