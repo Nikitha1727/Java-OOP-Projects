@@ -1,0 +1,42 @@
+# Why Strings Are Immutable in Java
+
+In Java, once a `String` object is created, its value cannot be changed.
+
+For example:
+
+```java
+String name = "Nikitha";
+name.concat(" K");
+System.out.println(name);
+```
+
+**Output:**
+```text
+Nikitha
+```
+
+You might expect the output to be `Nikitha K`, but that doesn't happen because `concat()` creates a new String instead of changing the original one.
+
+To store the updated value:
+
+```java
+name = name.concat(" K");
+System.out.println(name);
+```
+
+**Output:**
+```text
+Nikitha K
+```
+
+### Why does Java make Strings immutable?
+
+- **Security:** Strings are commonly used for usernames, file paths and other sensitive values. Immutability prevents accidental changes.
+- **String Pool:** Java can safely reuse String objects because their values cannot change.
+- **Thread Safety:** Multiple threads can access the same String without worrying about its value being modified.
+
+### Remember
+
+A String is immutable, but its reference variable can point to a different String object.
+
+That's one of the important concepts to understand when working with Strings in Java.
